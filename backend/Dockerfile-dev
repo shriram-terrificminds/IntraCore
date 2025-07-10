@@ -1,0 +1,46 @@
+FROM php:8.3-apache
+
+RUN a2enmod rewrite
+
+RUN apt-get update; \
+    apt-get --no-install-recommends install -y \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    git \
+    less \
+    vim \
+    default-mysql-client; \
+    apt-get -y clean
+
+# Ensuring PHP is set in development mode, also see https://docs.docker.com/samples/library/php/#configuration
+RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+
+# To increase the PHP memory limit
+RUN echo 'memory_limit = 512M' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini; \
+    echo 'upload_max_filesize = 50M' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini; \
+    echo 'post_max_size = 50M' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini;
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# To create a user inside container mapped to the user id of user running the application
+ARG UID=1000
+RUN mkdir /home/dev-user
+RUN useradd -G www-data,root -u ${UID} -d /home/dev-user dev-user
+RUN chown dev-user:dev-user /home/dev-user
+USER dev-user
+
+# Append to .bashrc
+RUN echo "alias ll='ls -alF'" >> ~/.bashrc
+
+WORKDIR /var/www
