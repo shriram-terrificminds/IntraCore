@@ -4,7 +4,7 @@ IntraCore is a comprehensive office management system designed to streamline ope
 
 ## Features
 
-- User Authentication with Role Management (Admin/Team Member)
+- User Authentication with Role Management
 - Inventory Request Management
 - Complaint Tracking System
 - Internal Broadcasts
@@ -41,9 +41,6 @@ IntraCore/
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js 18+ (for local development)
-- PHP 8.2+ (for local development)
-- Composer (for local development)
 
 ## Getting Started
 
@@ -53,56 +50,23 @@ IntraCore/
    cd IntraCore
    ```
 
-2. Copy environment files:
+2. Start Docker services:
    ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
+   docker compose up --build
    ```
 
-3. Start Docker services:
+3. Install backend dependencies:
    ```bash
-   docker-compose up --build -d
+   docker compose exec backend composer install
+   docker compose exec backend php artisan migrate
    ```
 
-4. Install backend dependencies:
-   ```bash
-   docker-compose exec backend composer install
-   docker-compose exec backend php artisan migrate
-   ```
-
-5. Access the application:
+4. Access the application:
    - Frontend: http://localhost:8050
    - Backend API: http://localhost:8000
 
-## Development
-
-### Frontend Development
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### Backend Development
-```bash
-cd backend
-composer install
-php artisan serve
-```
-
 ## Testing
 
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
-
-### Backend Tests
-```bash
-cd backend
-php artisan test
-```
 
 ## Contributing
 
