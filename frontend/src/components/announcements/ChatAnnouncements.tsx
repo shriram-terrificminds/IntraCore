@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Send, MapPin, Smile, Calendar } from 'lucide-react';
+import { Send, MapPin, Smile, Calendar, Heart, ThumbsUp } from 'lucide-react';
 import { EmojiPicker } from './EmojiPicker';
 
 interface ChatAnnouncementsProps {
@@ -20,18 +20,28 @@ interface Message {
   timestamp: string;
   location: string;
   type: 'announcement' | 'message';
+  reactions?: { [emoji: string]: string[] }; // emoji -> array of user IDs who reacted
 }
 
 const locations = [
   'All Locations',
-  'New York Office',
-  'London Office',
-  'California Office',
-  'Singapore Office',
-  'Toronto Office'
+  'Trivandrum',
+  'Kochi', 
+  'Bangalore'
 ];
 
 export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
+  // For demo purposes, simulating assigned location based on role
+  // In a real app, this would come from user context/authentication
+  const getUserAssignedLocation = () => {
+    switch (userRole) {
+      case 'hr': return 'Trivandrum';
+      case 'devops': return 'Kochi';
+      default: return 'All Locations';
+    }
+  };
+
+  const userAssignedLocation = getUserAssignedLocation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -40,34 +50,38 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
       senderRole: 'admin',
       timestamp: '2025-07-09T10:00:00Z',
       location: 'All Locations',
-      type: 'announcement'
+      type: 'announcement',
+      reactions: { '👍': ['user1', 'user2'], '❤️': ['user3'] }
     },
     {
       id: '2',
-      content: 'The New York office will have maintenance this weekend. Please plan accordingly. 🔧',
+      content: 'The Trivandrum office will have maintenance this weekend. Please plan accordingly. 🔧',
       sender: 'Admin',
       senderRole: 'admin',
       timestamp: '2025-07-09T10:15:00Z',
-      location: 'New York Office',
-      type: 'announcement'
+      location: 'Trivandrum',
+      type: 'announcement',
+      reactions: { '👍': ['user1'] }
     },
     {
       id: '3',
-      content: 'New coffee machine installed in the London office pantry! ☕',
+      content: 'New coffee machine installed in the Kochi office pantry! ☕',
       sender: 'Sarah Wilson',
-      senderRole: 'admin',
+      senderRole: 'devops',
       timestamp: '2025-07-09T11:30:00Z',
-      location: 'London Office',
-      type: 'announcement'
+      location: 'Kochi',
+      type: 'announcement',
+      reactions: { '☕': ['user1', 'user2', 'user3'], '👍': ['user4'] }
     },
     {
       id: '4',
-      content: 'Team meeting scheduled for Friday at 2 PM in the California office conference room.',
-      sender: 'Admin',
-      senderRole: 'admin',
+      content: 'Team meeting scheduled for Friday at 2 PM in the Bangalore office conference room.',
+      sender: 'Mike Johnson',
+      senderRole: 'devops',
       timestamp: '2025-07-09T12:00:00Z',
-      location: 'California Office',
-      type: 'announcement'
+      location: 'Bangalore',
+      type: 'announcement',
+      reactions: {}
     }
   ]);
 
@@ -86,13 +100,23 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
   }, [messages]);
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || userRole !== 'admin') return;
+    if (!newMessage.trim() || !['admin', 'hr', 'devops'].includes(userRole)) return;
+
+    // Get sender name based on role
+    const getSenderName = () => {
+      switch (userRole) {
+        case 'admin': return 'Admin';
+        case 'hr': return 'HR Team';
+        case 'devops': return 'DevOps Team';
+        default: return 'System';
+      }
+    };
 
     const message: Message = {
       id: Date.now().toString(),
       content: newMessage,
-      sender: 'Admin',
-      senderRole: 'admin',
+      sender: getSenderName(),
+      senderRole: userRole,
       timestamp: new Date().toISOString(),
       location: selectedLocation,
       type: 'announcement'
@@ -100,11 +124,44 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
 
     setMessages(prev => [...prev, message]);
     setNewMessage('');
+    
+    // TODO: Trigger notification system here
+    // This would send email and in-app notifications to users in the selected location
+    console.log(`Notification sent to users in ${selectedLocation} for role ${userRole}`);
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setNewMessage(prev => prev + emoji);
+    if (['admin', 'hr', 'devops'].includes(userRole)) {
+      setNewMessage(prev => prev + emoji);
+    }
     setShowEmojiPicker(false);
+  };
+
+  const handleReaction = (messageId: string, emoji: string) => {
+    setMessages(prev => prev.map(message => {
+      if (message.id === messageId) {
+        const reactions = { ...message.reactions };
+        const currentUserId = 'current-user'; // In real app, get from auth context
+        
+        if (!reactions[emoji]) {
+          reactions[emoji] = [];
+        }
+        
+        if (reactions[emoji].includes(currentUserId)) {
+          // Remove reaction
+          reactions[emoji] = reactions[emoji].filter(id => id !== currentUserId);
+          if (reactions[emoji].length === 0) {
+            delete reactions[emoji];
+          }
+        } else {
+          // Add reaction
+          reactions[emoji].push(currentUserId);
+        }
+        
+        return { ...message, reactions };
+      }
+      return message;
+    }));
   };
 
   const filteredMessages = messages.filter(message => 
@@ -138,9 +195,9 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Team Chat</h2>
+          <h2 className="text-2xl font-bold mb-2">Announcements</h2>
           <p className="text-muted-foreground">
-            Real-time announcements and updates
+            Company-wide announcements and updates
           </p>
         </div>
         
@@ -183,9 +240,14 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
                   <div className="flex items-center gap-2">
                     <Badge 
                       variant={message.senderRole === 'admin' ? 'default' : 'secondary'}
-                      className="text-xs"
+                      className={`text-xs ${
+                        message.senderRole === 'admin' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        message.senderRole === 'devops' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                        message.senderRole === 'hr' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                        'bg-green-100 text-green-800 border-green-200'
+                      }`}
                     >
-                      {message.sender}
+                      {message.sender} ({message.senderRole.toUpperCase()})
                     </Badge>
                     {message.location !== 'All Locations' && (
                       <Badge variant="outline" className="text-xs flex items-center gap-1">
@@ -205,14 +267,74 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
                     : 'bg-muted ml-auto'
                 }`}>
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  
+                  {/* Reactions */}
+                  {message.reactions && Object.keys(message.reactions).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {Object.entries(message.reactions).map(([emoji, userIds]) => (
+                        <Button
+                          key={emoji}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs bg-background/10 hover:bg-background/20"
+                          onClick={() => handleReaction(message.id, emoji)}
+                        >
+                          {emoji} {userIds.length}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Quick reaction buttons for members */}
+                  {userRole === 'member' && (
+                    <div className="flex gap-1 mt-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-xs hover:bg-background/20"
+                        onClick={() => handleReaction(message.id, '👍')}
+                      >
+                        👍
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-xs hover:bg-background/20"
+                        onClick={() => handleReaction(message.id, '❤️')}
+                      >
+                        ❤️
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-xs hover:bg-background/20"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      >
+                        <Smile className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area - Only for Admins */}
-          {userRole === 'admin' && (
+          {/* Member emoji reaction area */}
+          {userRole === 'member' && showEmojiPicker && (
+            <div className="border-t p-4 flex-shrink-0">
+              <div className="relative">
+                <EmojiPicker onEmojiSelect={(emoji) => {
+                  // For members, emojis are used for reactions only
+                  // You would typically associate this with a specific message
+                  setShowEmojiPicker(false);
+                }} />
+              </div>
+            </div>
+          )}
+
+          {/* Input Area - Only for Admin, HR, DevOps */}
+          {['admin', 'hr', 'devops'].includes(userRole) && (
             <div className="border-t p-4 flex-shrink-0">
               <div className="flex flex-col gap-3">
                 <Select value={selectedLocation} onValueChange={setSelectedLocation}>
@@ -220,11 +342,20 @@ export function ChatAnnouncements({ userRole }: ChatAnnouncementsProps) {
                     <SelectValue placeholder="Select target location" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
-                    ))}
+                   {locations.map((location) => {
+                      // For HR and DevOps, only show their assigned location (disable "All Locations")
+                      if (userRole === 'hr' || userRole === 'devops') {
+                        if (location !== userAssignedLocation) {
+                          return null;
+                        }
+                      }
+                      
+                      return (
+                        <SelectItem key={location} value={location}>
+                          {location}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 

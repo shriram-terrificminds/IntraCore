@@ -45,11 +45,11 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        location: user.location,
-        role: user.role,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        location: user.location || '',
+        role: user.role || 'member',
         profileImage: user.profileImage || '',
         password: ''
       });
@@ -106,6 +106,13 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
     }
   };
 
+  // Helper function to get avatar initials safely
+  const getAvatarInitials = () => {
+    const firstName = formData.firstName || '';
+    const lastName = formData.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   if (!user) return null;
 
   return (
@@ -127,7 +134,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
             <Avatar className="h-20 w-20">
               <AvatarImage src={formData.profileImage} alt="Profile" />
               <AvatarFallback>
-                {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                {getAvatarInitials()}
               </AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-2">
@@ -208,11 +215,9 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
                 <SelectValue placeholder="Select office location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="New York Office">New York Office</SelectItem>
-                <SelectItem value="London Office">London Office</SelectItem>
-                <SelectItem value="California Office">California Office</SelectItem>
-                <SelectItem value="Toronto Office">Toronto Office</SelectItem>
-                <SelectItem value="Singapore Office">Singapore Office</SelectItem>
+                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="Ernakulam">Ernakulam</SelectItem>
+                <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>
             </Select>
           </div>

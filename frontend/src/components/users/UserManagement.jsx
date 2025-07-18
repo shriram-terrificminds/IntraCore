@@ -12,14 +12,13 @@ import { DeleteUserDialog } from './DeleteUserDialog';
 
 export function UserManagement({ userRole }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [users, setUsers] = useState([
     {
       id: '1',
       name: 'John Doe',
       email: 'john.doe@email.com',
-      location: 'New York, USA',
+      location: 'Trivandrum',
       joinedDate: '2024-01-15',
       role: 'team-member',
       status: 'active',
@@ -31,11 +30,11 @@ export function UserManagement({ userRole }) {
       id: '2',
       name: 'Sarah Wilson',
       email: 'sarah.wilson@email.com',
-      location: 'London, UK',
+      location: 'Bangalore',
       joinedDate: '2024-02-20',
       role: 'admin',
       status: 'active',
-      department: 'Management',
+      department: 'HR',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 7, 2025 – 10:45 AM'
     },
@@ -43,11 +42,11 @@ export function UserManagement({ userRole }) {
       id: '3',
       name: 'Mike Johnson',
       email: 'mike.johnson@email.com',
-      location: 'California, USA',
+      location: 'Kochi',
       joinedDate: '2024-01-08',
       role: 'team-member',
       status: 'inactive',
-      department: 'Sales',
+      department: 'DevOps',
       lastEditedBy: 'sarah.wilson',
       lastEditedTime: 'July 6, 2025 – 4:20 PM'
     },
@@ -55,11 +54,11 @@ export function UserManagement({ userRole }) {
       id: '4',
       name: 'Emma Davis',
       email: 'emma.davis@email.com',
-      location: 'Toronto, Canada',
+      location: 'Trivandrum',
       joinedDate: '2024-03-01',
       role: 'team-member',
       status: 'active',
-      department: 'Marketing',
+      department: 'Marketing/BA',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 5, 2025 – 11:15 AM'
     },
@@ -67,11 +66,11 @@ export function UserManagement({ userRole }) {
       id: '5',
       name: 'Alex Chen',
       email: 'alex.chen@email.com',
-      location: 'Singapore',
+      location: 'Bangalore',
       joinedDate: '2024-02-14',
       role: 'team-member',
       status: 'pending',
-      department: 'Engineering',
+      department: 'Finance',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 4, 2025 – 3:00 PM'
     }
@@ -87,10 +86,9 @@ export function UserManagement({ userRole }) {
                          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.location.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
     
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesDepartment;
   });
 
   const handleCreateUser = (userData) => {
@@ -172,10 +170,6 @@ export function UserManagement({ userRole }) {
               Create User
             </Button>
           )}
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export Data
-          </Button>
         </div>
       </div>
 
@@ -239,17 +233,6 @@ export function UserManagement({ userRole }) {
               />
             </div>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
 
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
               <SelectTrigger className="w-[180px]">
@@ -257,12 +240,11 @@ export function UserManagement({ userRole }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Sales">Sales</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Management">Management</SelectItem>
                 <SelectItem value="HR">HR</SelectItem>
+                <SelectItem value="DevOps">DevOps</SelectItem>
+                <SelectItem value="Marketing/BA">Marketing/BA</SelectItem>
                 <SelectItem value="Finance">Finance</SelectItem>
+                <SelectItem value="Engineering">Engineering</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -273,7 +255,6 @@ export function UserManagement({ userRole }) {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Joined Date</TableHead>
@@ -294,11 +275,6 @@ export function UserManagement({ userRole }) {
                     <TableCell>
                       <Badge className={getRoleBadge(user.role)}>
                         {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadge(user.status)}>
-                        {user.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{user.department}</TableCell>

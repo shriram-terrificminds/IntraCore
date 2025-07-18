@@ -22,7 +22,7 @@ export function Header({ userRole, setUserRole }: HeaderProps) {
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <div>
-          <h1 className="text-xl font-semibold">TM Office Hub</h1>
+          <h1 className="text-xl font-semibold">IntraCore</h1>
           <p className="text-sm text-muted-foreground">Inventory & Complaint Management</p>
         </div>
       </div>
