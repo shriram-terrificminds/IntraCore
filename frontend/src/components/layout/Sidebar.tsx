@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  userRole: "admin" | "member" | "devops" | "hr";
+  userRole: "admin" | "devops" | "hr" | "employee";
 }
 
 export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
@@ -55,21 +55,15 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
         { id: "reports", label: "Reports", icon: BarChart3 }
       );
     }
-    // DevOps gets user management and announcements
-    else if (userRole === "devops") {
+    // DevOps and HR get dashboard, inventory, complaints, announcements, reports
+    else if (userRole === "devops" || userRole === "hr") {
       roleSpecificItems.push(
-        { id: "users", label: "Users", icon: User },
-        { id: "announcements", label: "Announcements", icon: Settings }
+        { id: "announcements", label: "Announcements", icon: Settings },
+        { id: "reports", label: "Reports", icon: BarChart3 }
       );
     }
-    // HR gets announcements only
-    else if (userRole === "hr") {
-      roleSpecificItems.push(
-        { id: "announcements", label: "Announcements", icon: Settings }
-      );
-    }
-    // Member gets basic access only
-    else if (userRole === "member") {
+    // Employee gets dashboard, inventory, complaints, announcements
+    else if (userRole === "employee") {
       roleSpecificItems.push(
         { id: "announcements", label: "Announcements", icon: Settings }
       );
