@@ -177,11 +177,9 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
                 <SelectValue placeholder="Select office location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="New York Office">New York Office</SelectItem>
-                <SelectItem value="London Office">London Office</SelectItem>
-                <SelectItem value="California Office">California Office</SelectItem>
-                <SelectItem value="Toronto Office">Toronto Office</SelectItem>
-                <SelectItem value="Singapore Office">Singapore Office</SelectItem>
+                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="Ernakulam">Ernakulam</SelectItem>
+                <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>
             </Select>
           </div>

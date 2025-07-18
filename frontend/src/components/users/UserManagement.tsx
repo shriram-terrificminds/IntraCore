@@ -40,7 +40,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@email.com',
-      location: 'New York Office',
+      location: 'Trivandrum',
       joinedDate: '2024-01-15',
       role: 'member',
       profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face',
@@ -52,9 +52,9 @@ export function UserManagement({ userRole }: UserManagementProps) {
       firstName: 'Sarah',
       lastName: 'Wilson',
       email: 'sarah.wilson@email.com',
-      location: 'London Office',
+      location: 'Kochi',
       joinedDate: '2024-02-20',
-      role: 'admin',
+      role: 'devops',
       profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b593?w=64&h=64&fit=crop&crop=face',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 7, 2025 – 10:45 AM'
@@ -64,7 +64,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
       firstName: 'Mike',
       lastName: 'Johnson',
       email: 'mike.johnson@email.com',
-      location: 'California Office',
+      location: 'Bangalore',
       joinedDate: '2024-01-08',
       role: 'devops',
       profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
@@ -76,7 +76,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
       firstName: 'Emma',
       lastName: 'Davis',
       email: 'emma.davis@email.com',
-      location: 'Toronto Office',
+      location: 'Trivandrum',
       joinedDate: '2024-03-01',
       role: 'hr',
       profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face',
@@ -88,7 +88,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
       firstName: 'Alex',
       lastName: 'Chen',
       email: 'alex.chen@email.com',
-      location: 'Singapore Office',
+      location: 'Kochi',
       joinedDate: '2024-02-14',
       role: 'member',
       profileImage: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=64&h=64&fit=crop&crop=face',
@@ -185,16 +185,12 @@ export function UserManagement({ userRole }: UserManagementProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          {userRole === 'admin' && (
+          {['admin', 'devops', 'hr'].includes(userRole) && (
             <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Create User
             </Button>
           )}
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export Data
-          </Button>
         </div>
       </div>
 
@@ -279,11 +275,9 @@ export function UserManagement({ userRole }: UserManagementProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="New York Office">New York Office</SelectItem>
-                <SelectItem value="London Office">London Office</SelectItem>
-                <SelectItem value="California Office">California Office</SelectItem>
-                <SelectItem value="Toronto Office">Toronto Office</SelectItem>
-                <SelectItem value="Singapore Office">Singapore Office</SelectItem>
+                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="Kochi">Kochi</SelectItem>
+                <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -299,7 +293,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
                   <TableHead>Joined Date</TableHead>
                   <TableHead>Last Edited By</TableHead>
                   <TableHead>Last Edited Time</TableHead>
-                  {userRole === 'admin' && <TableHead>Actions</TableHead>}
+                  {['admin', 'devops', 'hr'].includes(userRole) && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -330,7 +324,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
                     <TableCell>
                       <span className="text-sm text-muted-foreground">{user.lastEditedTime}</span>
                     </TableCell>
-                    {userRole === 'admin' && (
+                    {['admin', 'devops', 'hr'].includes(userRole) && (
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button 

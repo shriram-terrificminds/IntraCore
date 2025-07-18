@@ -55,16 +55,16 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
         { id: "reports", label: "Reports", icon: BarChart3 }
       );
     }
-    // DevOps gets technical features
+    // DevOps gets user management and announcements
     else if (userRole === "devops") {
       roleSpecificItems.push(
+        { id: "users", label: "Users", icon: User },
         { id: "announcements", label: "Announcements", icon: Settings }
       );
     }
-    // HR gets user management and announcements
+    // HR gets announcements only
     else if (userRole === "hr") {
       roleSpecificItems.push(
-        { id: "users", label: "Users", icon: User },
         { id: "announcements", label: "Announcements", icon: Settings }
       );
     }
