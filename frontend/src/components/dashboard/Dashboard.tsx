@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface DashboardProps {
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
+  userRole: 'admin' | 'employee' | 'devops' | 'hr';
 }
 
 const statsData = {

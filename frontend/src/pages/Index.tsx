@@ -11,7 +11,7 @@ import { Reports } from '@/components/reports/Reports';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userRole, setUserRole] = useState<'admin' | 'member' | 'devops' | 'hr'>('member');
+  const [userRole, setUserRole] = useState<'admin' | 'employee' | 'devops' | 'hr'>('employee');
 
   const renderContent = () => {
     switch (activeTab) {

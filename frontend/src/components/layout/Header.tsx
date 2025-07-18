@@ -5,13 +5,13 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
 
 interface HeaderProps {
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
-  setUserRole: (role: 'admin' | 'member' | 'devops' | 'hr') => void;
+  userRole: 'admin' | 'employee' | 'devops' | 'hr';
+  setUserRole: (role: 'admin' | 'employee' | 'devops' | 'hr') => void;
 }
 
 export function Header({ userRole, setUserRole }: HeaderProps) {
   const handleProfileClick = () => {
-    const roles: ('admin' | 'member' | 'devops' | 'hr')[] = ['admin', 'member', 'devops', 'hr'];
+    const roles: ('admin' | 'employee' | 'devops' | 'hr')[] = ['admin', 'employee', 'devops', 'hr'];
     const currentIndex = roles.indexOf(userRole);
     const nextIndex = (currentIndex + 1) % roles.length;
     setUserRole(roles[nextIndex]);

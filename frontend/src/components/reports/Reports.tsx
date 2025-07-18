@@ -11,7 +11,7 @@ import { ReportsSummary } from './ReportsSummary';
 import { ExportDialog } from './ExportDialog';
 
 interface ReportsProps {
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
+  userRole: 'admin' | 'employee' | 'devops' | 'hr';
 }
 
 const mockInventoryData = [
