@@ -5,76 +5,60 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserPlus, Upload } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { UserPlus } from 'lucide-react';
 
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateUser: (userData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    location: string;
-    joinedDate: string;
-    role: 'admin' | 'member' | 'devops' | 'hr';
-    profileImage?: string;
-  }) => void;
+  onCreateUser: (userData: Partial<User>) => void;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  location: string;
+  joinedDate: string;
+  role: string;
+  status: string;
+  department: string;
+  lastEditedBy: string;
+  lastEditedTime: string;
 }
 
 export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUserDialogProps) {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     location: '',
-    role: '' as 'admin' | 'member' | 'devops' | 'hr',
-    profileImage: ''
+    role: 'team-member',
+    department: 'Engineering',
+    status: 'active'
   });
-  
-  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location || !formData.role) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+    if (!formData.name || !formData.email || !formData.location) {
       return;
     }
 
     onCreateUser({
       ...formData,
-      joinedDate: new Date().toISOString().split('T')[0],
-      profileImage: formData.profileImage || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face`
+      joinedDate: new Date().toISOString().split('T')[0]
     });
-    
+
     // Reset form
     setFormData({
-      firstName: '',
-      lastName: '',
+      name: '',
       email: '',
       location: '',
-      role: '' as 'admin' | 'member' | 'devops' | 'hr',
-      profileImage: ''
+      role: 'team-member',
+      department: 'Engineering',
+      status: 'active'
     });
-    
-    onOpenChange(false);
-  };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({ ...prev, profileImage: e.target?.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
+    onOpenChange(false);
   };
 
   return (
@@ -91,56 +75,19 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Profile Image */}
-          <div className="flex flex-col items-center gap-3">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={formData.profileImage} alt="Profile" />
-              <AvatarFallback>
-                {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="profile-image" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <Upload className="h-4 w-4" />
-                  Upload Photo
-                </div>
-              </Label>
-              <input
-                id="profile-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                placeholder="Enter first name"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
-              <Input
-                id="lastName"
-                value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                placeholder="Enter last name"
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter full name"
+              required
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email Address</Label>
             <Input
               id="email"
               type="email"
@@ -152,34 +99,66 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
-            <Select value={formData.role} onValueChange={(value: 'admin' | 'member' | 'devops' | 'hr') => 
-              setFormData(prev => ({ ...prev, role: value }))
+            <Label htmlFor="location">Location</Label>
+            <Select value={formData.location} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, location: value }))
             }>
               <SelectTrigger>
-                <SelectValue placeholder="Select user role" />
+                <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="devops">DevOps</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
+                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="Kochi">Kochi</SelectItem>
+                <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location *</Label>
-            <Select value={formData.location} onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, location: value }))
+            <Label htmlFor="department">Department</Label>
+            <Select value={formData.department} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, department: value }))
             }>
               <SelectTrigger>
-                <SelectValue placeholder="Select office location" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
-                <SelectItem value="Ernakulam">Ernakulam</SelectItem>
-                <SelectItem value="Bangalore">Bangalore</SelectItem>
+                <SelectItem value="Engineering">Engineering</SelectItem>
+                <SelectItem value="HR">HR</SelectItem>
+                <SelectItem value="DevOps">DevOps</SelectItem>
+                <SelectItem value="Marketing/BA">Marketing/BA</SelectItem>
+                <SelectItem value="Finance">Finance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="role">User Role</Label>
+            <Select value={formData.role} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, role: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="team-member">Team Member</SelectItem>
+                <SelectItem value="admin">Administrator</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, status: value }))
+            }>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>

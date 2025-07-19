@@ -5,93 +5,90 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Download, User, UserPlus, Settings, Edit, Trash2, Filter } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import { Search, Download, User, UserPlus, Settings, Edit, Trash2 } from 'lucide-react';
 import { CreateUserDialog } from './CreateUserDialog';
 import { EditUserDialog } from './EditUserDialog';
 import { DeleteUserDialog } from './DeleteUserDialog';
 
-interface UserManagementProps {
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
-}
-
-interface LiveUser {
+interface User {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   location: string;
   joinedDate: string;
-  role: 'admin' | 'member' | 'devops' | 'hr';
-  profileImage?: string;
+  role: string;
+  status: string;
+  department: string;
   lastEditedBy: string;
   lastEditedTime: string;
 }
 
+interface UserManagementProps {
+  userRole: 'admin' | 'employee' | 'devops' | 'hr';
+}
+
 export function UserManagement({ userRole }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [locationFilter, setLocationFilter] = useState('all');
-  const [users, setUsers] = useState<LiveUser[]>([
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [users, setUsers] = useState<User[]>([
     {
       id: '1',
-      firstName: 'John',
-      lastName: 'Doe',
+      name: 'John Doe',
       email: 'john.doe@email.com',
       location: 'Trivandrum',
       joinedDate: '2024-01-15',
-      role: 'member',
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face',
+      role: 'team-member',
+      status: 'active',
+      department: 'Engineering',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 8, 2025 – 2:30 PM'
     },
     {
       id: '2',
-      firstName: 'Sarah',
-      lastName: 'Wilson',
+      name: 'Sarah Wilson',
       email: 'sarah.wilson@email.com',
-      location: 'Kochi',
+      location: 'Bangalore',
       joinedDate: '2024-02-20',
-      role: 'devops',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b593?w=64&h=64&fit=crop&crop=face',
+      role: 'admin',
+      status: 'active',
+      department: 'HR',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 7, 2025 – 10:45 AM'
     },
     {
       id: '3',
-      firstName: 'Mike',
-      lastName: 'Johnson',
+      name: 'Mike Johnson',
       email: 'mike.johnson@email.com',
-      location: 'Bangalore',
+      location: 'Kochi',
       joinedDate: '2024-01-08',
-      role: 'devops',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+      role: 'team-member',
+      status: 'inactive',
+      department: 'DevOps',
       lastEditedBy: 'sarah.wilson',
       lastEditedTime: 'July 6, 2025 – 4:20 PM'
     },
     {
       id: '4',
-      firstName: 'Emma',
-      lastName: 'Davis',
+      name: 'Emma Davis',
       email: 'emma.davis@email.com',
       location: 'Trivandrum',
       joinedDate: '2024-03-01',
-      role: 'hr',
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face',
+      role: 'team-member',
+      status: 'active',
+      department: 'Marketing/BA',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 5, 2025 – 11:15 AM'
     },
     {
       id: '5',
-      firstName: 'Alex',
-      lastName: 'Chen',
+      name: 'Alex Chen',
       email: 'alex.chen@email.com',
-      location: 'Kochi',
+      location: 'Bangalore',
       joinedDate: '2024-02-14',
-      role: 'member',
-      profileImage: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=64&h=64&fit=crop&crop=face',
+      role: 'team-member',
+      status: 'pending',
+      department: 'Finance',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 4, 2025 – 3:00 PM'
     }
@@ -100,24 +97,24 @@ export function UserManagement({ userRole }: UserManagementProps) {
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [deleteUserOpen, setDeleteUserOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<LiveUser | null>(null);
-
-  const { toast } = useToast();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const filteredUsers = users.filter(user => {
-    const fullName = `${user.firstName} ${user.lastName}`;
-    const matchesSearch = fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesLocation = locationFilter === 'all' || user.location === locationFilter;
-    return matchesSearch && matchesRole && matchesLocation;
+    
+    const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
+    
+    return matchesSearch && matchesDepartment;
   });
 
-  const handleCreateUser = (userData: Omit<LiveUser, 'id' | 'lastEditedBy' | 'lastEditedTime'>) => {
-    const newUser: LiveUser = {
+  const handleCreateUser = (userData: Partial<User>) => {
+    const newUser: User = {
       ...userData,
       id: Date.now().toString(),
+      status: userData.status || 'active',
+      department: userData.department || 'Engineering',
       lastEditedBy: 'admin',
       lastEditedTime: new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -126,17 +123,11 @@ export function UserManagement({ userRole }: UserManagementProps) {
         hour: '2-digit',
         minute: '2-digit'
       }).replace(/,/, ' –')
-    };
+    } as User;
     setUsers(prev => [...prev, newUser]);
-    
-    // Send welcome email notification
-    toast({
-      title: "User Created",
-      description: `Welcome email sent to ${userData.email} with login instructions`,
-    });
   };
 
-  const handleEditUser = (userData: Partial<LiveUser>) => {
+  const handleEditUser = (userData: Partial<User>) => {
     if (!selectedUser) return;
     setUsers(prev => prev.map(user => 
       user.id === selectedUser.id ? { 
@@ -160,20 +151,26 @@ export function UserManagement({ userRole }: UserManagementProps) {
   };
 
   const getRoleBadge = (role: string) => {
-    const roleColors = {
-      admin: 'bg-blue-100 text-blue-800 border-blue-200',
-      member: 'bg-green-100 text-green-800 border-green-200',
-      devops: 'bg-purple-100 text-purple-800 border-purple-200',
-      hr: 'bg-orange-100 text-orange-800 border-orange-200'
-    };
-    return roleColors[role] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return role === 'admin' 
+      ? 'bg-blue-100 text-blue-800 border-blue-200'
+      : 'bg-purple-100 text-purple-800 border-purple-200';
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
   const totalUsers = users.length;
   const adminCount = users.filter(user => user.role === 'admin').length;
-  const devopsCount = users.filter(user => user.role === 'devops').length;
-  const hrCount = users.filter(user => user.role === 'hr').length;
-  const memberCount = users.filter(user => user.role === 'member').length;
 
   return (
     <div className="space-y-6">
@@ -185,7 +182,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          {['admin', 'devops', 'hr'].includes(userRole) && (
+          {userRole === 'admin' && (
             <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Create User
@@ -194,7 +191,6 @@ export function UserManagement({ userRole }: UserManagementProps) {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -224,159 +220,144 @@ export function UserManagement({ userRole }: UserManagementProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Members</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{memberCount}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {users.filter(user => user.status === 'active').length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Regular members
+              Currently active
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Users Management Table */}
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>Users</CardTitle>
           <CardDescription>
-            Manage users and their roles
+            Manage user accounts and permissions
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search users by name, email, or location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 w-64"
+                />
+              </div>
+              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  <SelectItem value="Engineering">Engineering</SelectItem>
+                  <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="DevOps">DevOps</SelectItem>
+                  <SelectItem value="Marketing/BA">Marketing/BA</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="devops">DevOps</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
-                <SelectItem value="Kochi">Kochi</SelectItem>
-                <SelectItem value="Bangalore">Bangalore</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
           </div>
 
-          {/* Users Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Joined Date</TableHead>
-                  <TableHead>Last Edited By</TableHead>
-                  <TableHead>Last Edited Time</TableHead>
-                  {['admin', 'devops', 'hr'].includes(userRole) && <TableHead>Actions</TableHead>}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Last Edited</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.location}</TableCell>
+                  <TableCell>
+                    <Badge className={getRoleBadge(user.role)}>
+                      {user.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusBadge(user.status)}>
+                      {user.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{user.department}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <div className="font-medium">{user.lastEditedBy}</div>
+                      <div className="text-muted-foreground">{user.lastEditedTime}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setEditUserOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setDeleteUserOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
-                          <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <div className="font-medium">{user.firstName} {user.lastName}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadge(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{user.location}</TableCell>
-                    <TableCell>{user.joinedDate}</TableCell>
-                    <TableCell>
-                      <span className="font-medium">{user.lastEditedBy}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">{user.lastEditedTime}</span>
-                    </TableCell>
-                    {['admin', 'devops', 'hr'].includes(userRole) && (
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setEditUserOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setDeleteUserOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
-      <CreateUserDialog 
+      <CreateUserDialog
         open={createUserOpen}
         onOpenChange={setCreateUserOpen}
         onCreateUser={handleCreateUser}
       />
-      
-      <EditUserDialog 
+
+      <EditUserDialog
         open={editUserOpen}
         onOpenChange={setEditUserOpen}
-        user={selectedUser}
         onEditUser={handleEditUser}
+        user={selectedUser}
       />
-      
-      <DeleteUserDialog 
+
+      <DeleteUserDialog
         open={deleteUserOpen}
         onOpenChange={setDeleteUserOpen}
-        user={selectedUser}
         onDeleteUser={handleDeleteUser}
+        user={selectedUser}
       />
     </div>
   );
