@@ -1,54 +1,130 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import ImagePickerField from '../components/ImagePickerField';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const ROLES = ['Employee', 'DevOps', 'HR'];
+const CATEGORIES = ['Tech', 'Furniture', 'Stationery', 'Other'];
+const PRIORITIES = ['low', 'medium', 'high'];
+const DEPARTMENTS = ['DevOps', 'HR', 'Admin', 'Other'];
+const LOCATIONS = ['Headquarters', 'North Branch', 'South Branch'];
 
-const RequestForm = () => {
-  const [title, setTitle] = useState('');
+const RequestForm = ({ navigation }: any) => {
+  const [itemName, setItemName] = useState('');
+  const [category, setCategory] = useState('');
+  const [priority, setPriority] = useState('');
+  const [department, setDepartment] = useState('');
+  const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
-  const [role, setRole] = useState(ROLES[0]);
-  const [image, setImage] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('Request Submitted', 'Your request has been submitted (mock).');
-      setTitle(''); setDescription(''); setRole(ROLES[0]); setImage(null);
-    }, 1000);
-  };
+  // Dummy image upload state
+  const [images, setImages] = useState<any[]>([]);
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>New Inventory Request</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.heading}>New Inventory Request</Text>
+      <Text style={styles.label}>Item Name</Text>
       <TextInput
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 8, padding: 8 }}
+        style={styles.input}
+        placeholder="e.g., Wireless Mouse, Office Chair"
+        value={itemName}
+        onChangeText={setItemName}
       />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={category}
+              onValueChange={setCategory}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select category" value="" />
+              {CATEGORIES.map(c => <Picker.Item key={c} label={c} value={c} />)}
+            </Picker>
+          </View>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Priority</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={priority}
+              onValueChange={setPriority}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select priority" value="" />
+              {PRIORITIES.map(p => <Picker.Item key={p} label={p} value={p} />)}
+            </Picker>
+          </View>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Department</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={department}
+              onValueChange={setDepartment}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select department" value="" />
+              {DEPARTMENTS.map(d => <Picker.Item key={d} label={d} value={d} />)}
+            </Picker>
+          </View>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Location</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={location}
+              onValueChange={setLocation}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select location" value="" />
+              {LOCATIONS.map(l => <Picker.Item key={l} label={l} value={l} />)}
+            </Picker>
+          </View>
+        </View>
+      </View>
+      <Text style={styles.label}>Description</Text>
       <TextInput
-        placeholder="Description"
+        style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
+        placeholder="Describe why you need this item..."
         value={description}
         onChangeText={setDescription}
         multiline
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 8, padding: 8, minHeight: 60 }}
       />
-      <Text style={{ marginBottom: 4 }}>Route to Role:</Text>
-      <Picker
-        selectedValue={role}
-        onValueChange={setRole}
-        style={{ marginBottom: 8 }}
-      >
-        {ROLES.map(r => <Picker.Item key={r} label={r} value={r} />)}
-      </Picker>
-      <ImagePickerField onPick={setImage} />
-      {image && <Text style={{ marginBottom: 8 }}>Image selected</Text>}
-      <Button title={loading ? 'Submitting...' : 'Submit'} onPress={handleSubmit} disabled={loading} />
-    </View>
+      <Text style={styles.label}>Supporting Images (Optional)</Text>
+      <TouchableOpacity style={styles.imageUpload}>
+        <MaterialIcons name="cloud-upload" size={36} color="#a3a3a3" />
+        <Text style={styles.imageUploadText}>Click to upload or drag and drop images</Text>
+        <Text style={styles.imageUploadHint}>PNG, JPG up to 10MB</Text>
+      </TouchableOpacity>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation?.goBack?.()}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.submitBtn}>
+          <Text style={styles.submitText}>Submit Request</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { padding: 24, backgroundColor: '#fff', flexGrow: 1 },
+  heading: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
+  label: { fontWeight: 'bold', fontSize: 15, marginTop: 12, marginBottom: 4 },
+  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 14, fontSize: 16, marginBottom: 0, backgroundColor: '#f9fafb' },
+  pickerWrapper: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, backgroundColor: '#f9fafb', marginBottom: 0 },
+  picker: { height: 44, width: '100%' },
+  imageUpload: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', padding: 24, marginTop: 8, marginBottom: 16, backgroundColor: '#fafafa' },
+  imageUploadText: { color: '#52525b', fontSize: 15, marginTop: 8 },
+  imageUploadHint: { color: '#a3a3a3', fontSize: 13, marginTop: 2 },
+  buttonRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 24, gap: 12 },
+  cancelBtn: { backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 12 },
+  cancelText: { color: '#222', fontWeight: 'bold', fontSize: 16 },
+  submitBtn: { backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 12 },
+  submitText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+});
+
 export default RequestForm;

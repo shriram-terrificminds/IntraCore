@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const FILTERS = ['All Requests', 'Pending', 'Approved', 'Delivered'];
 
@@ -52,6 +53,7 @@ const statusStyles = {
 
 const RequestsList = () => {
   const [filter, setFilter] = useState('All Requests');
+  const navigation = useNavigation();
 
   const filtered =
     filter === 'All Requests'
@@ -65,12 +67,12 @@ const RequestsList = () => {
           <Text style={styles.heading}>Inventory Requests</Text>
           <Text style={styles.subtitle}>Manage office equipment and supply requests</Text>
         </View>
-        <TouchableOpacity style={styles.newRequestBtn}>
+        <TouchableOpacity style={styles.newRequestBtn} onPress={() => navigation.navigate('RequestForm')}>
           <MaterialIcons name="add" size={22} color="#fff" />
           <Text style={styles.newRequestText}>New Request</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.filterRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={{ paddingHorizontal: 20 }}>
         {FILTERS.map(f => (
           <TouchableOpacity
             key={f}
@@ -80,7 +82,7 @@ const RequestsList = () => {
             <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, color: '#6b7280', marginBottom: 8 },
   newRequestBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 18, paddingVertical: 0, height: 48, alignSelf: 'flex-start', marginLeft: 12, justifyContent: 'center' },
   newRequestText: { color: '#fff', fontWeight: 'bold', fontSize: 15, marginLeft: 4 },
-  filterRow: { flexDirection: 'row', marginTop: 16, marginBottom: 8, paddingHorizontal: 20 },
+  filterRow: { flexDirection: 'row', marginTop: 16, marginBottom: 8 },
   filterBtn: { paddingVertical: 7, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 8 },
   filterBtnActive: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#111827' },
   filterText: { color: '#64748b', fontWeight: 'bold', fontSize: 15 },
