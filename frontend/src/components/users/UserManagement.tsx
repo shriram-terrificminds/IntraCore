@@ -10,85 +10,96 @@ import { Search, Download, User, UserPlus, Settings, Edit, Trash2 } from 'lucide
 import { CreateUserDialog } from './CreateUserDialog';
 import { EditUserDialog } from './EditUserDialog';
 import { DeleteUserDialog } from './DeleteUserDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   location: string;
+  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
+  profileImage?: string;
   joinedDate: string;
-  role: string;
-  status: string;
-  department: string;
   lastEditedBy: string;
   lastEditedTime: string;
+  password?: string;
 }
 
 interface UserManagementProps {
   userRole: 'admin' | 'employee' | 'devops' | 'hr';
 }
 
+const roleMap = {
+  1: 'Admin',
+  2: 'HR', 
+  3: 'DevOps',
+  4: 'Employee'
+};
+
+const locationMap = {
+  'TVM': 'TVM',
+  'Ernakulam': 'Ernakulam', 
+  'Bangalore': 'Bangalore'
+};
+
 export function UserManagement({ userRole }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
   const [users, setUsers] = useState<User[]>([
     {
       id: '1',
-      name: 'John Doe',
+      firstName: 'John',
+      lastName: 'Doe',
       email: 'john.doe@email.com',
-      location: 'Trivandrum',
+      location: 'TVM',
+      role: 4,
       joinedDate: '2024-01-15',
-      role: 'team-member',
-      status: 'active',
-      department: 'Engineering',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 8, 2025 – 2:30 PM'
     },
     {
       id: '2',
-      name: 'Sarah Wilson',
+      firstName: 'Sarah',
+      lastName: 'Wilson',
       email: 'sarah.wilson@email.com',
       location: 'Bangalore',
+      role: 1,
       joinedDate: '2024-02-20',
-      role: 'admin',
-      status: 'active',
-      department: 'HR',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 7, 2025 – 10:45 AM'
     },
     {
       id: '3',
-      name: 'Mike Johnson',
+      firstName: 'Mike',
+      lastName: 'Johnson',
       email: 'mike.johnson@email.com',
-      location: 'Kochi',
+      location: 'Ernakulam',
+      role: 3,
       joinedDate: '2024-01-08',
-      role: 'team-member',
-      status: 'inactive',
-      department: 'DevOps',
       lastEditedBy: 'sarah.wilson',
       lastEditedTime: 'July 6, 2025 – 4:20 PM'
     },
     {
       id: '4',
-      name: 'Emma Davis',
+      firstName: 'Emma',
+      lastName: 'Davis',
       email: 'emma.davis@email.com',
-      location: 'Trivandrum',
+      location: 'TVM',
+      role: 4,
       joinedDate: '2024-03-01',
-      role: 'team-member',
-      status: 'active',
-      department: 'Marketing/BA',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 5, 2025 – 11:15 AM'
     },
     {
       id: '5',
-      name: 'Alex Chen',
+      firstName: 'Alex',
+      lastName: 'Chen',
       email: 'alex.chen@email.com',
       location: 'Bangalore',
+      role: 2,
       joinedDate: '2024-02-14',
-      role: 'team-member',
-      status: 'pending',
-      department: 'Finance',
       lastEditedBy: 'admin',
       lastEditedTime: 'July 4, 2025 – 3:00 PM'
     }
@@ -98,23 +109,25 @@ export function UserManagement({ userRole }: UserManagementProps) {
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [deleteUserOpen, setDeleteUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { toast } = useToast();
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
+    const matchesRole = roleFilter === 'all' || user.role.toString() === roleFilter;
+    const matchesLocation = locationFilter === 'all' || user.location === locationFilter;
     
-    return matchesSearch && matchesDepartment;
+    return matchesSearch && matchesRole && matchesLocation;
   });
 
   const handleCreateUser = (userData: Partial<User>) => {
     const newUser: User = {
       ...userData,
       id: Date.now().toString(),
-      status: userData.status || 'active',
-      department: userData.department || 'Engineering',
+      role: userData.role || 4, // Default to Employee (4)
+      joinedDate: new Date().toISOString().split('T')[0],
       lastEditedBy: 'admin',
       lastEditedTime: new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -124,11 +137,18 @@ export function UserManagement({ userRole }: UserManagementProps) {
         minute: '2-digit'
       }).replace(/,/, ' –')
     } as User;
+    
     setUsers(prev => [...prev, newUser]);
+    
+    toast({
+      title: "User Created",
+      description: "User has been created successfully with temporary password. Welcome email sent.",
+    });
   };
 
   const handleEditUser = (userData: Partial<User>) => {
     if (!selectedUser) return;
+    
     setUsers(prev => prev.map(user => 
       user.id === selectedUser.id ? { 
         ...user, 
@@ -143,34 +163,41 @@ export function UserManagement({ userRole }: UserManagementProps) {
         }).replace(/,/, ' –')
       } : user
     ));
+    
+    toast({
+      title: "User Updated",
+      description: "User information has been updated successfully",
+    });
   };
 
   const handleDeleteUser = () => {
     if (!selectedUser) return;
+    
     setUsers(prev => prev.filter(user => user.id !== selectedUser.id));
+    
+    toast({
+      title: "User Deleted",
+      description: "User has been deleted successfully",
+    });
   };
 
-  const getRoleBadge = (role: string) => {
-    return role === 'admin' 
-      ? 'bg-blue-100 text-blue-800 border-blue-200'
-      : 'bg-purple-100 text-purple-800 border-purple-200';
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
+  const getRoleBadge = (role: number) => {
+    switch (role) {
+      case 1:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 2:
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'inactive':
+      case 3:
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 4:
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const totalUsers = users.length;
-  const adminCount = users.filter(user => user.role === 'admin').length;
+  const adminCount = users.filter(user => user.role === 1).length;
 
   return (
     <div className="space-y-6">
@@ -191,7 +218,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -208,27 +235,11 @@ export function UserManagement({ userRole }: UserManagementProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Administrators</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{adminCount}</div>
             <p className="text-xs text-muted-foreground">
               Admin users
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {users.filter(user => user.status === 'active').length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Currently active
             </p>
           </CardContent>
         </Card>
@@ -247,30 +258,36 @@ export function UserManagement({ userRole }: UserManagementProps) {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder="Search by name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 w-64"
                 />
               </div>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by department" />
+                  <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  <SelectItem value="Engineering">Engineering</SelectItem>
-                  <SelectItem value="HR">HR</SelectItem>
-                  <SelectItem value="DevOps">DevOps</SelectItem>
-                  <SelectItem value="Marketing/BA">Marketing/BA</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="1">Admin</SelectItem>
+                  <SelectItem value="2">HR</SelectItem>
+                  <SelectItem value="3">DevOps</SelectItem>
+                  <SelectItem value="4">Employee</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="TVM">TVM</SelectItem>
+                  <SelectItem value="Ernakulam">Ernakulam</SelectItem>
+                  <SelectItem value="Bangalore">Bangalore</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
           </div>
 
           <Table>
@@ -278,10 +295,9 @@ export function UserManagement({ userRole }: UserManagementProps) {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Location</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Department</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Joined Date</TableHead>
                 <TableHead>Last Edited</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -289,20 +305,17 @@ export function UserManagement({ userRole }: UserManagementProps) {
             <TableBody>
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {user.firstName} {user.lastName}
+                  </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.location}</TableCell>
                   <TableCell>
                     <Badge className={getRoleBadge(user.role)}>
-                      {user.role}
+                      {roleMap[user.role as keyof typeof roleMap]}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadge(user.status)}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.department}</TableCell>
+                  <TableCell>{user.location}</TableCell>
+                  <TableCell>{user.joinedDate}</TableCell>
                   <TableCell>
                     <div className="text-sm">
                       <div className="font-medium">{user.lastEditedBy}</div>

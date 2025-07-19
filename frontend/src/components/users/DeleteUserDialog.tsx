@@ -4,13 +4,13 @@ import { Trash2 } from 'lucide-react';
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   location: string;
+  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
+  profileImage?: string;
   joinedDate: string;
-  role: string;
-  status: string;
-  department: string;
   lastEditedBy: string;
   lastEditedTime: string;
 }
@@ -30,6 +30,8 @@ export function DeleteUserDialog({ open, onOpenChange, user, onDeleteUser }: Del
 
   if (!user) return null;
 
+  const fullName = `${user.firstName} ${user.lastName}`;
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -39,7 +41,7 @@ export function DeleteUserDialog({ open, onOpenChange, user, onDeleteUser }: Del
             Delete User
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete <strong>{user.name}</strong> ({user.email})?
+            Are you sure you want to delete <strong>{fullName}</strong> ({user.email})?
             This action cannot be undone and will permanently remove the user from the system.
           </AlertDialogDescription>
         </AlertDialogHeader>
