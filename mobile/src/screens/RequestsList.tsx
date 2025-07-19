@@ -1,117 +1,153 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
-import StatusChip from '../components/StatusChip';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
+const FILTERS = ['All Requests', 'Pending', 'Approved', 'Delivered'];
 
 const MOCK_REQUESTS = [
-  { id: '1', title: 'Laptop', status: 'Pending', user: 'alice', role: 'Employee' },
-  { id: '2', title: 'Monitor', status: 'Approved', user: 'bob', role: 'Employee' },
-  { id: '3', title: 'Keyboard', status: 'Delivered', user: 'alice', role: 'Employee' },
-  { id: '4', title: 'Mouse', status: 'Rejected', user: 'bob', role: 'Employee' },
+  {
+    id: '1',
+    title: 'Wireless Mouse',
+    status: 'Pending',
+    priority: 'medium',
+    location: 'Headquarters',
+    description: 'Current mouse is not working properly',
+    requestedBy: 'John Doe',
+    department: 'DevOps',
+    category: 'Tech',
+    date: '2024-01-15',
+  },
+  {
+    id: '2',
+    title: 'Office Chair',
+    status: 'Approved',
+    priority: 'high',
+    location: 'North Branch',
+    description: 'Ergonomic chair needed for back support',
+    requestedBy: 'Sarah Smith',
+    department: 'HR',
+    category: 'Furniture',
+    date: '2024-01-14',
+  },
+  {
+    id: '3',
+    title: 'HDMI Cable',
+    status: 'Delivered',
+    priority: 'low',
+    location: 'South Branch',
+    description: 'For presentation setup',
+    requestedBy: 'Bob Lee',
+    department: 'Tech',
+    category: 'Tech',
+    date: '2024-01-13',
+  },
 ];
 
-const canAct = (role: string) => ['admin', 'devops', 'hr'].includes(role.toLowerCase());
+const statusStyles = {
+  Pending: { color: '#b59f00', bg: '#fef9c3', icon: 'access-time' },
+  Approved: { color: '#2563eb', bg: '#dbeafe', icon: 'check-circle-outline' },
+  Delivered: { color: '#059669', bg: '#d1fae5', icon: 'cube-outline' },
+};
 
 const RequestsList = () => {
-  const { user } = useAuth();
-  const navigation = useNavigation();
-  const [requests, setRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [filter, setFilter] = useState('All Requests');
 
-  useEffect(() => {
-    // Filter by role
-    let data = MOCK_REQUESTS;
-    if (user?.role?.toLowerCase() === 'employee') {
-      data = data.filter(r => r.user === user.email.split('@')[0]);
-    }
-    setRequests(data);
-    setLoading(false);
-  }, [user]);
-
-  const filtered = requests.filter(r =>
-    (!statusFilter || r.status === statusFilter) &&
-    (!search || r.title.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
+  const filtered =
+    filter === 'All Requests'
+      ? MOCK_REQUESTS
+      : MOCK_REQUESTS.filter(r => r.status === filter);
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <TextInput
-        placeholder="Search requests..."
-        value={search}
-        onChangeText={setSearch}
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 8, padding: 8 }}
-      />
-      <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-        {['', 'Pending', 'Approved', 'Delivered', 'Rejected'].map(s => (
-          <TouchableOpacity key={s} onPress={() => setStatusFilter(s)} style={{ marginRight: 8 }}>
-            <Text style={{ color: statusFilter === s ? '#007AFF' : '#333' }}>{s || 'All'}</Text>
+    <ScrollView style={{ backgroundColor: '#fff' }}>
+      <View style={styles.headerRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.heading}>Inventory Requests</Text>
+          <Text style={styles.subtitle}>Manage office equipment and supply requests</Text>
+        </View>
+        <TouchableOpacity style={styles.newRequestBtn}>
+          <MaterialIcons name="add" size={22} color="#fff" />
+          <Text style={styles.newRequestText}>New Request</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.filterRow}>
+        {FILTERS.map(f => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigation.navigate('RequestDetail', { id: item.id })}>
-            <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 8, marginBottom: 8 }}>
-              <Text style={{ fontWeight: 'bold' }}>{item.title}</Text>
-              <StatusChip status={item.status} />
-              {canAct(user?.role) && item.status === 'Pending' && (
-                <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                  <TouchableOpacity style={{ marginRight: 12 }}><Text style={{ color: 'green' }}>Approve</Text></TouchableOpacity>
-                  <TouchableOpacity><Text style={{ color: 'red' }}>Reject</Text></TouchableOpacity>
+        renderItem={({ item }) => {
+          const status = statusStyles[item.status];
+          return (
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: status.bg }]}> 
+                  <MaterialIcons name={status.icon} size={16} color={status.color} style={{ marginRight: 2 }} />
+                  <Text style={{ color: status.color, fontWeight: 'bold', fontSize: 13 }}>{item.status}</Text>
                 </View>
-              )}
-              {canAct(user?.role) && item.status === 'Approved' && (
-                <TouchableOpacity style={{ marginTop: 8 }}><Text style={{ color: 'blue' }}>Mark as Delivered</Text></TouchableOpacity>
-              )}
-              {user?.role?.toLowerCase() === 'employee' && item.status === 'Delivered' && (
-                <TouchableOpacity style={{ marginTop: 8 }}><Text style={{ color: 'purple' }}>Mark as Received</Text></TouchableOpacity>
-              )}
+                <View style={styles.priorityBadge}><Text style={styles.priorityText}>{item.priority}</Text></View>
+                <View style={styles.locationBadge}>
+                  <MaterialIcons name="location-on" size={15} color="#64748b" style={{ marginRight: 2 }} />
+                  <Text style={styles.locationText}>{item.location}</Text>
+                </View>
+              </View>
+              <Text style={styles.cardDesc}>{item.description}</Text>
+              <View style={styles.cardDetailsRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardDetailsLabel}>Requested by:</Text>
+                  <Text style={styles.cardDetailsValue}>{item.requestedBy}</Text>
+                  <Text style={styles.cardDetailsLabel}>Category:</Text>
+                  <Text style={styles.cardDetailsValue}>{item.category}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardDetailsLabel}>Department:</Text>
+                  <Text style={styles.cardDetailsValue}>{item.department}</Text>
+                  <Text style={styles.cardDetailsLabel}>Date:</Text>
+                  <Text style={styles.cardDetailsValue}>{item.date}</Text>
+                </View>
+              </View>
             </View>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 32 }}>No requests found.</Text>}
+          );
+        }}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        style={{ marginTop: 8 }}
+        scrollEnabled={false}
       />
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('RequestForm')}
-        accessibilityLabel="Create new request"
-      >
-        <Text style={styles.fabText}>＋</Text>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 32,
-    backgroundColor: '#007AFF',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  fabText: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginTop: -2,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'stretch', padding: 20, paddingBottom: 0 },
+  heading: { fontSize: 26, fontWeight: 'bold', marginBottom: 2 },
+  subtitle: { fontSize: 15, color: '#6b7280', marginBottom: 8 },
+  newRequestBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 18, paddingVertical: 0, height: 48, alignSelf: 'flex-start', marginLeft: 12, justifyContent: 'center' },
+  newRequestText: { color: '#fff', fontWeight: 'bold', fontSize: 15, marginLeft: 4 },
+  filterRow: { flexDirection: 'row', marginTop: 16, marginBottom: 8, paddingHorizontal: 20 },
+  filterBtn: { paddingVertical: 7, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 8 },
+  filterBtnActive: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#111827' },
+  filterText: { color: '#64748b', fontWeight: 'bold', fontSize: 15 },
+  filterTextActive: { color: '#111827' },
+  card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginHorizontal: 16, marginBottom: 18, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 2, borderWidth: 1, borderColor: '#e5e7eb' },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', marginRight: 8 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 },
+  priorityBadge: { backgroundColor: '#f1f5f9', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 },
+  priorityText: { color: '#334155', fontWeight: 'bold', fontSize: 13 },
+  locationBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  locationText: { color: '#334155', fontWeight: 'bold', fontSize: 13 },
+  cardDesc: { color: '#64748b', fontSize: 15, marginTop: 4, marginBottom: 10 },
+  cardDetailsRow: { flexDirection: 'row', marginTop: 4 },
+  cardDetailsLabel: { color: '#64748b', fontSize: 13, marginTop: 2 },
+  cardDetailsValue: { color: '#111827', fontWeight: 'bold', fontSize: 15, marginBottom: 2 },
 });
 
 export default RequestsList;

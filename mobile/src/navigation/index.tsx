@@ -11,6 +11,8 @@ import RequestDetail from '../screens/RequestDetail';
 import ComplaintsList from '../screens/ComplaintsList';
 import ComplaintForm from '../screens/ComplaintForm';
 import ComplaintDetail from '../screens/ComplaintDetail';
+import ProfileScreen from '../screens/ProfileScreen';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../contexts/AuthContext';
 import { RootStackParamList } from './types';
 // import type { RootStackParamList } from './types';
@@ -57,10 +59,14 @@ export default function Navigation() {
       <AppTab.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ headerRight: () => <Button title="Logout" onPress={() => signOut()} color="#d00" /> }}
+        options={{
+          headerRight: () => <Button title="Logout" onPress={() => signOut()} color="#d00" />, 
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="dashboard" color={color} size={size} />,
+        }}
       />
-      <AppTab.Screen name="RequestsList"   component={RequestsStackScreen}   options={{ title: 'Requests',   headerShown: false }} />
-      <AppTab.Screen name="ComplaintsList" component={ComplaintsStackScreen} options={{ title: 'Complaints', headerShown: false }} />
+      <AppTab.Screen name="Inventory" component={RequestsStackScreen} options={{ title: 'Inventory', headerShown: false, tabBarIcon: ({ color, size }) => <MaterialIcons name="inventory" color={color} size={size} /> }} />
+      <AppTab.Screen name="ComplaintsList" component={ComplaintsStackScreen} options={{ title: 'Complaints', headerShown: false, tabBarIcon: ({ color, size }) => <MaterialIcons name="chat-bubble-outline" color={color} size={size} /> }} />
+      <AppTab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile', headerShown: false, tabBarIcon: ({ color, size }) => <MaterialIcons name="person" color={color} size={size} /> }} />
     </AppTab.Navigator>
   ) : (
     <AuthStackNav.Navigator screenOptions={{ headerShown: false }}>
