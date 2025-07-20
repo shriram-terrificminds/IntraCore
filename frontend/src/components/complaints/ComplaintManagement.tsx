@@ -1,202 +1,199 @@
-import { useState } from 'react';
-import { Plus, AlertTriangle, Clock, CheckCircle, Eye, Image } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Filter, SortDesc } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { NewComplaintDialog } from './NewComplaintDialog';
+import { ComplaintCard } from './ComplaintCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface ComplaintManagementProps {
   userRole: 'admin' | 'member' | 'devops' | 'hr';
 }
 
+// Mock data for demonstration
 const mockComplaints = [
   {
     id: 1,
     title: 'Coffee machine not working',
-    category: 'Pantry',
-    description: 'The coffee machine in the main pantry is not dispensing coffee properly',
-    reportedBy: 'John Doe',
-    assignedTo: 'Admin Team',
-    status: 'pending-verification',
-    priority: 'medium',
-    createdDate: '2024-01-15',
-    location: 'Main Office - Floor 3',
+    description: 'The coffee machine in the main pantry is not dispensing coffee properly. It makes a grinding noise but no coffee comes out.',
+    role: { name: 'Admin' },
+    resolution_status: 'Pending',
+    resolution_notes: null,
+    created_at: '2024-01-15T10:30:00Z',
+    resolved_at: null,
+    user: { name: 'John Doe' },
+    resolvedBy: null,
     images: [
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
-      'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400'
+      { image_url: 'complaints/coffee-machine-1.jpg' },
+      { image_url: 'complaints/coffee-machine-2.jpg' }
     ]
   },
   {
     id: 2,
     title: 'WiFi connectivity issues',
-    category: 'Tech',
-    description: 'Frequent disconnections and slow internet speed in the conference room',
-    reportedBy: 'Sarah Smith',
-    assignedTo: 'DevOps Team',
-    status: 'verified',
-    priority: 'high',
-    createdDate: '2024-01-14',
-    verifiedDate: '2024-01-15',
-    location: 'Conference Room B',
+    description: 'Frequent disconnections and slow internet speed in the conference room. Affecting video calls and presentations.',
+    role: { name: 'DevOps' },
+    resolution_status: 'In-progress',
+    resolution_notes: 'Investigating network configuration. Will check router settings and signal strength.',
+    created_at: '2024-01-14T14:20:00Z',
+    resolved_at: null,
+    user: { name: 'Sarah Smith' },
+    resolvedBy: null,
     images: [
-      'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400'
+      { image_url: 'complaints/wifi-issue.jpg' }
     ]
   },
   {
     id: 3,
     title: 'Air conditioning too cold',
-    category: 'Others',
-    description: 'The AC in the open workspace is set too cold, making it uncomfortable',
-    reportedBy: 'Mike Johnson',
-    assignedTo: 'Admin Team',
-    status: 'resolved',
-    priority: 'low',
-    createdDate: '2024-01-13',
-    resolvedDate: '2024-01-15',
-    location: 'Open Workspace',
+    description: 'The AC in the open workspace is set too cold, making it uncomfortable for employees. Temperature needs adjustment.',
+    role: { name: 'Admin' },
+    resolution_status: 'Resolved',
+    resolution_notes: 'Temperature adjusted from 18°C to 22°C. All employees notified of the change.',
+    created_at: '2024-01-13T09:15:00Z',
+    resolved_at: '2024-01-15T16:45:00Z',
+    user: { name: 'Mike Johnson' },
+    resolvedBy: { name: 'Admin Team' },
     images: []
+  },
+  {
+    id: 4,
+    title: 'Printer paper jam',
+    description: 'The main office printer has a paper jam that needs to be cleared. Affecting document printing for the entire floor.',
+    role: { name: 'Admin' },
+    resolution_status: 'Rejected',
+    resolution_notes: 'Issue resolved by user after following troubleshooting guide. No further action needed.',
+    created_at: '2024-01-12T11:00:00Z',
+    resolved_at: '2024-01-12T11:30:00Z',
+    user: { name: 'Lisa Chen' },
+    resolvedBy: { name: 'Admin Team' },
+    images: [
+      { image_url: 'complaints/printer-jam.jpg' }
+    ]
+  },
+  {
+    id: 5,
+    title: 'Broken office chair',
+    description: 'Office chair in cubicle A3 has a broken wheel and won\'t roll properly. Needs replacement or repair.',
+    role: { name: 'HR' },
+    resolution_status: 'Pending',
+    resolution_notes: null,
+    created_at: '2024-01-16T08:45:00Z',
+    resolved_at: null,
+    user: { name: 'David Wilson' },
+    resolvedBy: null,
+    images: [
+      { image_url: 'complaints/broken-chair.jpg' }
+    ]
   }
+];
+
+const ROLES = [
+  { id: 1, name: 'Admin' },
+  { id: 2, name: 'HR' },
+  { id: 3, name: 'DevOps' },
+  { id: 4, name: 'Employee' },
+  { id: 5, name: 'Manager' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Status' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'In-progress', label: 'In Progress' },
+  { value: 'Resolved', label: 'Resolved' },
+  { value: 'Rejected', label: 'Rejected' },
 ];
 
 export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const [showNewComplaint, setShowNewComplaint] = useState(false);
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [complaints, setComplaints] = useState(mockComplaints);
+  const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('latest');
+  const { toast } = useToast();
 
-  const handleImageClick = (images, index) => {
-    setSelectedImages(images);
-    setCurrentImageIndex(index);
-    setShowImageModal(true);
-  };
+  // Filter and search complaints
+  useEffect(() => {
+    let filtered = [...complaints];
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % selectedImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + selectedImages.length) % selectedImages.length);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending-verification': return <Clock className="h-4 w-4" />;
-      case 'verified': return <Eye className="h-4 w-4" />;
-      case 'in-progress': return <AlertTriangle className="h-4 w-4" />;
-      case 'resolved': return <CheckCircle className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(complaint => complaint.resolution_status === statusFilter);
     }
-  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending-verification': return 'bg-yellow-100 text-yellow-800';
-      case 'verified': return 'bg-blue-100 text-blue-800';
-      case 'in-progress': return 'bg-orange-100 text-orange-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+    // Filter by role
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(complaint => complaint.role.name === roleFilter);
     }
-  };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+    // Search by title or complaint number
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(complaint => 
+        complaint.title.toLowerCase().includes(search) ||
+        complaint.id.toString().includes(search)
+      );
     }
+
+    // Sort complaints
+    filtered.sort((a, b) => {
+      if (sortBy === 'latest') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      } else if (sortBy === 'oldest') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      return 0;
+    });
+
+    setFilteredComplaints(filtered);
+  }, [complaints, searchTerm, statusFilter, roleFilter, sortBy]);
+
+  const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setComplaints(prev => prev.map(complaint => {
+      if (complaint.id === complaintId) {
+        return {
+          ...complaint,
+          resolution_status: status,
+          resolution_notes: notes || complaint.resolution_notes,
+          resolved_at: status === 'Resolved' || status === 'Rejected' ? new Date().toISOString() : null,
+          resolvedBy: status === 'Resolved' || status === 'Rejected' ? { name: 'Current User' } : complaint.resolvedBy,
+        };
+      }
+      return complaint;
+    }));
   };
 
-  const filterComplaints = (status?: string) => {
-    if (!status) return mockComplaints;
-    return mockComplaints.filter(complaint => complaint.status === status);
+  const getStats = () => {
+    return {
+      total: complaints.length,
+      pending: complaints.filter(c => c.resolution_status === 'Pending').length,
+      inProgress: complaints.filter(c => c.resolution_status === 'In-progress').length,
+      resolved: complaints.filter(c => c.resolution_status === 'Resolved').length,
+      rejected: complaints.filter(c => c.resolution_status === 'Rejected').length,
+    };
   };
 
-  const renderComplaintCard = (complaint) => (
-    <Card key={complaint.id}>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="font-semibold">{complaint.title}</h3>
-              <Badge className={getStatusColor(complaint.status)}>
-                {getStatusIcon(complaint.status)}
-                <span className="ml-1 capitalize">{complaint.status.replace('-', ' ')}</span>
-              </Badge>
-              <Badge className={getPriorityColor(complaint.priority)}>
-                {complaint.priority}
-              </Badge>
-              <Badge variant="outline">{complaint.category}</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
-            
-            {complaint.images && complaint.images.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Image className="h-4 w-4" />
-                  <span className="text-sm font-medium">Attached Images ({complaint.images.length})</span>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {complaint.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Complaint image ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded-md border cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => handleImageClick(complaint.images, index)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Reported by:</span>
-                <p>{complaint.reportedBy}</p>
-              </div>
-              <div>
-                <span className="font-medium">Assigned to:</span>
-                <p>{complaint.assignedTo}</p>
-              </div>
-              <div>
-                <span className="font-medium">Location:</span>
-                <p>{complaint.location}</p>
-              </div>
-              <div>
-                <span className="font-medium">Date:</span>
-                <p>{complaint.createdDate}</p>
-              </div>
-            </div>
-          </div>
-          {userRole === 'admin' && (
-            <div className="flex gap-2">
-              {complaint.status === 'pending-verification' && (
-                <Button size="sm" variant="outline">
-                  <Eye className="h-4 w-4 mr-1" />
-                  Verify
-                </Button>
-              )}
-              {complaint.status === 'verified' && (
-                <Button size="sm">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Mark Resolved
-                </Button>
-              )}
-              <Button size="sm" variant="ghost">
-                View Details
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const stats = getStats();
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold mb-2">Complaint Management</h2>
@@ -204,7 +201,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             Track and resolve office complaints efficiently
           </p>
         </div>
-        {(userRole === 'member' || userRole === 'devops' || userRole === 'hr') && (
+        {(userRole === 'member' || userRole === 'devops' || userRole === 'hr' || userRole === 'admin') && (
           <Button onClick={() => setShowNewComplaint(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Complaint
@@ -212,58 +209,134 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
         )}
       </div>
 
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All Complaints</TabsTrigger>
-          <TabsTrigger value="pending-verification">Pending Verification</TabsTrigger>
-          <TabsTrigger value="verified">Verified</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved</TabsTrigger>
-        </TabsList>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-sm text-muted-foreground">Pending</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-orange-600">{stats.inProgress}</div>
+            <div className="text-sm text-muted-foreground">In Progress</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
+            <div className="text-sm text-muted-foreground">Resolved</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+            <div className="text-sm text-muted-foreground">Rejected</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="all" className="space-y-4">
-          {mockComplaints.map((complaint) => renderComplaintCard(complaint))}
-        </TabsContent>
-
-        <TabsContent value="pending-verification">
-          {filterComplaints('pending-verification').map((complaint) => renderComplaintCard(complaint))}
-        </TabsContent>
-
-        <TabsContent value="verified">
-          {filterComplaints('verified').map((complaint) => renderComplaintCard(complaint))}
-        </TabsContent>
-
-        <TabsContent value="resolved">
-          {filterComplaints('resolved').map((complaint) => renderComplaintCard(complaint))}
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              Complaint Images ({currentImageIndex + 1} of {selectedImages.length})
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center">
-            <img
-              src={selectedImages[currentImageIndex]}
-              alt={`Complaint image ${currentImageIndex + 1}`}
-              className="max-w-full max-h-[70vh] object-contain rounded-lg"
-            />
-          </div>
-          {selectedImages.length > 1 && (
-            <div className="flex justify-center gap-2 mt-4">
-              <Button variant="outline" onClick={prevImage}>
-                Previous
-              </Button>
-              <Button variant="outline" onClick={nextImage}>
-                Next
-              </Button>
+      {/* Filters and Search */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by title or complaint #"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Role Filter */}
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                {ROLES.map(role => (
+                  <SelectItem key={role.id} value={role.name}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="latest">Latest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredComplaints.length} of {complaints.length} complaints
+        </p>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {statusFilter !== 'all' && `Status: ${statusFilter}`}
+            {roleFilter !== 'all' && ` • Role: ${roleFilter}`}
+            {searchTerm && ` • Search: "${searchTerm}"`}
+          </span>
+        </div>
+      </div>
+
+      {/* Complaints List */}
+      <div className="space-y-4">
+        {filteredComplaints.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">No complaints found matching your criteria.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredComplaints.map((complaint) => (
+            <ComplaintCard
+              key={complaint.id}
+              complaint={complaint}
+              userRole={userRole}
+              onStatusUpdate={handleStatusUpdate}
+            />
+          ))
+        )}
+      </div>
+
+      {/* New Complaint Dialog */}
       <NewComplaintDialog 
         open={showNewComplaint} 
         onOpenChange={setShowNewComplaint}
