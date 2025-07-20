@@ -9,18 +9,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserPlus, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  location: string;
+  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
+  profileImage?: string;
+  joinedDate: string;
+  lastEditedBy: string;
+  lastEditedTime: string;
+  password?: string;
+}
+
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateUser: (userData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    location: string;
-    joinedDate: string;
-    role: 'admin' | 'member' | 'devops' | 'hr';
-    profileImage?: string;
-  }) => void;
+  onCreateUser: (userData: Partial<User>) => void;
 }
 
 export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUserDialogProps) {
@@ -29,19 +35,30 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
     lastName: '',
     email: '',
     location: '',
-    role: '' as 'admin' | 'member' | 'devops' | 'hr',
-    profileImage: ''
+    role: 4, // Default to Employee
+    profileImage: '',
+    password: ''
   });
-  
+
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location || !formData.role) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location || !formData.password) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including password",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate password strength
+    if (formData.password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters long",
         variant: "destructive"
       });
       return;
@@ -49,20 +66,20 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
 
     onCreateUser({
       ...formData,
-      joinedDate: new Date().toISOString().split('T')[0],
-      profileImage: formData.profileImage || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face`
+      joinedDate: new Date().toISOString().split('T')[0]
     });
-    
+
     // Reset form
     setFormData({
       firstName: '',
       lastName: '',
       email: '',
       location: '',
-      role: '' as 'admin' | 'member' | 'devops' | 'hr',
-      profileImage: ''
+      role: 4,
+      profileImage: '',
+      password: ''
     });
-    
+
     onOpenChange(false);
   };
 
@@ -75,6 +92,13 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Helper function to get avatar initials
+  const getAvatarInitials = () => {
+    const firstName = formData.firstName || '';
+    const lastName = formData.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   return (
@@ -96,7 +120,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
             <Avatar className="h-20 w-20">
               <AvatarImage src={formData.profileImage} alt="Profile" />
               <AvatarFallback>
-                {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                {getAvatarInitials()}
               </AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-2">
@@ -140,7 +164,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email Address *</Label>
             <Input
               id="email"
               type="email"
@@ -152,18 +176,34 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="password">Password *</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              placeholder="Enter password (min 8 characters)"
+              required
+              minLength={8}
+            />
+            <p className="text-xs text-muted-foreground">
+              Password must be at least 8 characters long
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="role">Role *</Label>
-            <Select value={formData.role} onValueChange={(value: 'admin' | 'member' | 'devops' | 'hr') => 
-              setFormData(prev => ({ ...prev, role: value }))
+            <Select value={formData.role.toString()} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, role: parseInt(value) }))
             }>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="devops">DevOps</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
+                <SelectItem value="1">Admin</SelectItem>
+                <SelectItem value="2">HR</SelectItem>
+                <SelectItem value="3">DevOps</SelectItem>
+                <SelectItem value="4">Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -174,10 +214,10 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
               setFormData(prev => ({ ...prev, location: value }))
             }>
               <SelectTrigger>
-                <SelectValue placeholder="Select office location" />
+                <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="TVM">TVM</SelectItem>
                 <SelectItem value="Ernakulam">Ernakulam</SelectItem>
                 <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>

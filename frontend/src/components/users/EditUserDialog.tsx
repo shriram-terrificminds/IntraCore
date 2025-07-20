@@ -15,9 +15,9 @@ interface User {
   lastName: string;
   email: string;
   location: string;
-  joinedDate: string;
-  role: 'admin' | 'member' | 'devops' | 'hr';
+  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
   profileImage?: string;
+  joinedDate: string;
   lastEditedBy: string;
   lastEditedTime: string;
 }
@@ -35,7 +35,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
     lastName: '',
     email: '',
     location: '',
-    role: '' as 'admin' | 'member' | 'devops' | 'hr',
+    role: 4 as number,
     profileImage: '',
     password: ''
   });
@@ -49,7 +49,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
         lastName: user.lastName || '',
         email: user.email || '',
         location: user.location || '',
-        role: user.role || 'member',
+        role: user.role || 4,
         profileImage: user.profileImage || '',
         password: ''
       });
@@ -59,7 +59,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location || !formData.role) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -79,7 +79,6 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
     // Only include password if it's provided
     if (formData.password) {
-      // In a real app, you'd hash this password
       toast({
         title: "Password Updated",
         description: "User password has been updated successfully",
@@ -88,11 +87,6 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
     onEditUser(updateData);
     onOpenChange(false);
-    
-    toast({
-      title: "User Updated",
-      description: "User information has been updated successfully",
-    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,17 +185,17 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
           <div className="space-y-2">
             <Label htmlFor="editRole">Role *</Label>
-            <Select value={formData.role} onValueChange={(value: 'admin' | 'member' | 'devops' | 'hr') => 
-              setFormData(prev => ({ ...prev, role: value }))
+            <Select value={formData.role.toString()} onValueChange={(value) => 
+              setFormData(prev => ({ ...prev, role: parseInt(value) }))
             }>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="devops">DevOps</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
+                <SelectItem value="1">Admin</SelectItem>
+                <SelectItem value="2">HR</SelectItem>
+                <SelectItem value="3">DevOps</SelectItem>
+                <SelectItem value="4">Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -215,7 +209,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
                 <SelectValue placeholder="Select office location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Trivandrum">Trivandrum</SelectItem>
+                <SelectItem value="TVM">TVM</SelectItem>
                 <SelectItem value="Ernakulam">Ernakulam</SelectItem>
                 <SelectItem value="Bangalore">Bangalore</SelectItem>
               </SelectContent>
