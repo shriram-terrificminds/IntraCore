@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('broadcasts', function (Blueprint $table) {
             $table->id();
-            $table->text('message');
+            $table->text('message', 2000)->required();
             $table->unsignedBigInteger('sender_id')->nullable();
             $table->unsignedBigInteger('target_location_id')->nullable();
             $table->unsignedBigInteger('target_role_id')->nullable();

@@ -15,7 +15,8 @@ interface User {
   lastName: string;
   email: string;
   location: string;
-  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
+  joinedDate: string;
+  role: UserRole;
   profileImage?: string;
   joinedDate: string;
   lastEditedBy: string;
@@ -35,7 +36,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
     lastName: '',
     email: '',
     location: '',
-    role: 4 as number,
+    role: '' as UserRole,
     profileImage: '',
     password: ''
   });
@@ -185,8 +186,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
           <div className="space-y-2">
             <Label htmlFor="editRole">Role *</Label>
-            <Select value={formData.role.toString()} onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, role: parseInt(value) }))
+            <Select value={formData.role} onValueChange={(value: UserRole) => 
+              setFormData(prev => ({ ...prev, role: value }))
             }>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />

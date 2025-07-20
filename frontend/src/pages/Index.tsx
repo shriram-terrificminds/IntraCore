@@ -8,10 +8,13 @@ import { Announcements } from '@/components/announcements/Announcements';
 import { UserManagement } from '@/components/users/UserManagement';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Reports } from '@/components/reports/Reports';
+import { AuthPage } from '@/components/auth/AuthPage';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userRole, setUserRole] = useState<'admin' | 'employee' | 'devops' | 'hr'>('employee');
+  const [userRole, setUserRole] = useState<any>(user?.role?.name.toLowerCase()); // Initialize with user's role
 
   const renderContent = () => {
     switch (activeTab) {
@@ -34,19 +37,22 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <Sidebar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab}
-          userRole={userRole}
-        />
-        <div className="flex-1 flex flex-col">
-          <Header userRole={userRole} setUserRole={setUserRole} />
-          <main className="flex-1 p-6">
-            {renderContent()}
-          </main>
+      {user ? (
+        <div className="min-h-screen flex w-full bg-background">
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+          <div className="flex-1 flex flex-col">
+            <Header />
+            <main className="flex-1 p-6">
+              {renderContent()}
+            </main>
+          </div>
         </div>
-      </div>
+      ) : (
+        <AuthPage />
+      )}
     </SidebarProvider>
   );
 };

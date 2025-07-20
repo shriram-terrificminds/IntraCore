@@ -3,40 +3,30 @@ import {
   ListChecks,
   MessageSquare,
   Settings,
-  User,
+  User as UserIcon, // Renamed to avoid conflict with User interface
   BarChart3,
+  MapPin,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetHeader,
+//   SheetTitle,
+//   SheetTrigger,
+// } from "@/components/ui/sheet"; // Removed as mobile sidebar is not needed
+// import { Button } from "@/components/ui/button"; // Removed as mobile sidebar trigger is gone
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  userRole: "admin" | "devops" | "hr" | "employee";
 }
 
-export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+  const { user } = useAuth();
 
   const getMenuItems = () => {
     const baseItems = [
@@ -47,26 +37,31 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
 
     const roleSpecificItems = [];
 
-    // Admin gets full access
-    if (userRole === "admin") {
-      roleSpecificItems.push(
-        { id: "users", label: "Users", icon: User },
-        { id: "announcements", label: "Announcements", icon: Settings },
-        { id: "reports", label: "Reports", icon: BarChart3 }
-      );
-    }
-    // DevOps and HR get dashboard, inventory, complaints, announcements, reports
-    else if (userRole === "devops" || userRole === "hr") {
-      roleSpecificItems.push(
-        { id: "announcements", label: "Announcements", icon: Settings },
-        { id: "reports", label: "Reports", icon: BarChart3 }
-      );
-    }
-    // Employee gets dashboard, inventory, complaints, announcements
-    else if (userRole === "employee") {
-      roleSpecificItems.push(
-        { id: "announcements", label: "Announcements", icon: Settings }
-      );
+    const currentUserRole = user?.role?.name?.toLowerCase();
+
+    switch (currentUserRole) {
+      case "admin":
+        roleSpecificItems.push(
+          { id: "users", label: "Users", icon: UserIcon },
+          { id: "announcements", label: "Announcements", icon: Settings },
+          { id: "reports", label: "Reports", icon: BarChart3 }
+        );
+        break;
+      case "devops":
+      case "hr":
+        roleSpecificItems.push(
+          { id: "announcements", label: "Announcements", icon: Settings },
+          { id: "reports", label: "Reports", icon: BarChart3 } // HR/Devops can see reports in your requirement analysis, so keeping this
+        );
+        break;
+      case "employee":
+        // Employees only see announcements from the list
+        roleSpecificItems.push(
+          { id: "announcements", label: "Announcements", icon: Settings }
+        );
+        break;
+      default:
+        break;
     }
 
     return [...baseItems, ...roleSpecificItems];
@@ -76,18 +71,18 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button
+      {/* <Sheet open={isOpen} onOpenChange={setIsOpen}> */}
+      {/* <SheetTrigger asChild> */}
+      {/* <Button
             variant="ghost"
             size="sm"
             className="md:hidden absolute top-2 left-2"
             onClick={() => setIsOpen(true)}
           >
             Menu
-          </Button>
-        </SheetTrigger>
-        <SheetContent
+          </Button> */}
+      {/* </SheetTrigger> */}
+      {/* <SheetContent
           side="left"
           className="w-64 flex flex-col gap-4 p-4 z-50"
         >
@@ -96,17 +91,22 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
           </SheetHeader>
           <div className="flex flex-col gap-2">
             <Avatar className="mx-auto">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={user?.profile_image || "https://github.com/shadcn.png"} alt={`${user?.first_name} ${user?.last_name}`} />
+              <AvatarFallback>
+                {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <p className="font-semibold">John Doe</p>
+              <p className="font-semibold">{user?.first_name} {user?.last_name}</p>
               <p className="text-sm text-muted-foreground">
-                john.doe@example.com
+                {user?.email}
               </p>
               <div className="mt-2">
-                <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                  Role: {userRole.toUpperCase()}
+                <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit">
+                  <UserIcon className="h-3 w-3" /> Role: {user?.role.name.toUpperCase()}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit mt-1">
+                  <MapPin className="h-3 w-3" /> {user?.location.name}
                 </span>
               </div>
             </div>
@@ -131,22 +131,26 @@ export function Sidebar({ activeTab, setActiveTab, userRole }: SidebarProps) {
               </NavLink>
             ))}
           </div>
-        </SheetContent>
-      </Sheet>
-      <aside className="hidden md:flex flex-col w-64 gap-4 p-4 border-r">
+        </SheetContent> */}
+      <aside className="flex flex-col w-64 gap-4 p-4 border-r">
         <div className="flex flex-col gap-2">
           <Avatar className="mx-auto">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage src={user?.profile_image || "https://github.com/shadcn.png"} alt={`${user?.first_name} ${user?.last_name}`} />
+            <AvatarFallback>
+              {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
+            </AvatarFallback>
           </Avatar>
           <div className="text-center">
-            <p className="font-semibold">John Doe</p>
+            <p className="font-semibold">{user?.first_name} {user?.last_name}</p>
             <p className="text-sm text-muted-foreground">
-              john.doe@example.com
+              {user?.email}
             </p>
             <div className="mt-2">
-              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                Role: {userRole.toUpperCase()}
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit">
+                <UserIcon className="h-3 w-3" /> Role: {user?.role.name.toUpperCase()}
+              </span>
+              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit mt-1">
+                <MapPin className="h-3 w-3" /> {user?.location.name}
               </span>
             </div>
           </div>
