@@ -33,6 +33,7 @@ services:
       - DB_DATABASE=intracore
       - DB_USERNAME=intracore
       - DB_PASSWORD=secret
+      - FRONTEND_URL=http://localhost:8050
       - REDIS_HOST=redis
       # Mail Configuration
       - MAIL_MAILER=smtp
