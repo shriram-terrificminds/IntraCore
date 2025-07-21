@@ -26,76 +26,75 @@ const mockComplaints = [
   {
     id: 1,
     title: 'Coffee machine not working',
-    description: 'The coffee machine in the main pantry is not dispensing coffee properly. It makes a grinding noise but no coffee comes out.',
-    role: { name: 'Admin' },
+    createdBy: 'Alex Brown',
+    category: 'Pantry',
+    description: 'The coffee machine in the main pantry is not dispensing coffee properly',
+    reportedBy: 'John Doe',
+    assignedTo: 'Admin Team',
+    status: 'pending-verification',
+    priority: 'medium',
+    createdDate: '2024-01-15',
+    location: 'Main Office - Floor 3',
+    role: { name: 'hr' },
+    images: [
+      { image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400' },
+      { image_url: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400' }
+    ],
+    // Fields for compatibility
     resolution_status: 'Pending',
     resolution_notes: null,
     created_at: '2024-01-15T10:30:00Z',
     resolved_at: null,
     user: { name: 'John Doe' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/coffee-machine-1.jpg' },
-      { image_url: 'complaints/coffee-machine-2.jpg' }
-    ]
+    resolvedBy: null
   },
   {
     id: 2,
     title: 'WiFi connectivity issues',
-    description: 'Frequent disconnections and slow internet speed in the conference room. Affecting video calls and presentations.',
-    role: { name: 'DevOps' },
+    createdBy: 'Sarah Smith',
+    category: 'Tech',
+    description: 'Frequent disconnections and slow internet speed in the conference room',
+    reportedBy: 'Sarah Smith',
+    assignedTo: 'DevOps Team',
+    status: 'verified',
+    priority: 'high',
+    createdDate: '2024-01-14',
+    verifiedDate: '2024-01-15',
+    location: 'Conference Room B',
+    role: { name: 'devops' },
+    images: [
+      { image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400' }
+    ],
+    // Fields for compatibility
     resolution_status: 'In-progress',
     resolution_notes: 'Investigating network configuration. Will check router settings and signal strength.',
     created_at: '2024-01-14T14:20:00Z',
     resolved_at: null,
     user: { name: 'Sarah Smith' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/wifi-issue.jpg' }
-    ]
+    resolvedBy: null
   },
   {
     id: 3,
     title: 'Air conditioning too cold',
-    description: 'The AC in the open workspace is set too cold, making it uncomfortable for employees. Temperature needs adjustment.',
-    role: { name: 'Admin' },
+    createdBy: 'Mike Johnson',
+    category: 'Others',
+    description: 'The AC in the open workspace is set too cold, making it uncomfortable',
+    reportedBy: 'Mike Johnson',
+    assignedTo: 'Admin Team',
+    status: 'resolved',
+    priority: 'low',
+    createdDate: '2024-01-13',
+    resolvedDate: '2024-01-15',
+    location: 'Open Workspace',
+    role: { name: 'admin' },
+    images: [],
+    // Fields for compatibility
     resolution_status: 'Resolved',
     resolution_notes: 'Temperature adjusted from 18°C to 22°C. All employees notified of the change.',
     created_at: '2024-01-13T09:15:00Z',
     resolved_at: '2024-01-15T16:45:00Z',
     user: { name: 'Mike Johnson' },
-    resolvedBy: { name: 'Admin Team' },
-    images: []
-  },
-  {
-    id: 4,
-    title: 'Printer paper jam',
-    description: 'The main office printer has a paper jam that needs to be cleared. Affecting document printing for the entire floor.',
-    role: { name: 'Admin' },
-    resolution_status: 'Rejected',
-    resolution_notes: 'Issue resolved by user after following troubleshooting guide. No further action needed.',
-    created_at: '2024-01-12T11:00:00Z',
-    resolved_at: '2024-01-12T11:30:00Z',
-    user: { name: 'Lisa Chen' },
-    resolvedBy: { name: 'Admin Team' },
-    images: [
-      { image_url: 'complaints/printer-jam.jpg' }
-    ]
-  },
-  {
-    id: 5,
-    title: 'Broken office chair',
-    description: 'Office chair in cubicle A3 has a broken wheel and won\'t roll properly. Needs replacement or repair.',
-    role: { name: 'HR' },
-    resolution_status: 'Pending',
-    resolution_notes: null,
-    created_at: '2024-01-16T08:45:00Z',
-    resolved_at: null,
-    user: { name: 'David Wilson' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/broken-chair.jpg' }
-    ]
+    resolvedBy: { name: 'Admin Team' }
   }
 ];
 
@@ -119,11 +118,14 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const [showNewComplaint, setShowNewComplaint] = useState(false);
   const [complaints, setComplaints] = useState(mockComplaints);
   const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [complaintTypeFilter, setComplaintTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
   const { toast } = useToast();
+
+  const currentUser = 'Alex Brown'; // Replace with actual current user in real app
 
   // Filter and search complaints
   useEffect(() => {
@@ -135,17 +137,57 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     }
 
     // Filter by role
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(complaint => complaint.role.name === roleFilter);
+    if (departmentFilter !== 'all') {
+      filtered = filtered.filter(complaint => complaint.role.name === departmentFilter);
     }
 
-    // Search by title or complaint number
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(complaint => 
-        complaint.title.toLowerCase().includes(search) ||
-        complaint.id.toString().includes(search)
-      );
+    // Filter by complaint type
+    if (userRole === 'hr' || userRole === 'devops') {
+      if (complaintTypeFilter === 'my-complaints') {
+        filtered = filtered.filter(complaint => complaint.createdBy === currentUser);
+      } else if (complaintTypeFilter === 'to-handle') {
+        filtered = filtered.filter(
+          complaint =>
+            complaint.role.name.toLowerCase() === userRole &&
+            complaint.createdBy !== currentUser
+        );
+      }
+      // If 'all', do nothing extra!
+    } else {
+      // For other users, apply a generic complaint type filter if not 'all'
+      if (complaintTypeFilter !== 'all') {
+        filtered = filtered.filter(complaint =>
+          complaint.title.toLowerCase().includes(complaintTypeFilter.toLowerCase())
+        );
+      }
+    }
+
+    // Search by title or request number
+    if (searchQuery.trim()) {
+      const search = searchQuery.toLowerCase();
+      filtered = filtered.filter(complaint => {
+        // Match by title
+        if (complaint.title.toLowerCase().includes(search)) return true;
+        // Match by request number (with or without REQ- prefix and leading zeros)
+        const reqNumber = `req-${complaint.id.toString().padStart(3, '0')}`;
+        if (reqNumber.includes(search)) return true;
+        if (complaint.id.toString().includes(search)) return true;
+        return false;
+      });
+    }
+
+    // All Complaints dropdown logic for HR/DevOps
+    if (userRole === 'hr' || userRole === 'devops') {
+      if (complaintTypeFilter === 'my-complaints') {
+        filtered = filtered.filter(complaint => complaint.createdBy === currentUser);
+      } else if (complaintTypeFilter === 'to-handle') {
+        filtered = filtered.filter(
+          complaint =>
+            complaint.role.name.toLowerCase() === userRole &&
+            complaint.createdBy !== currentUser
+        );
+      }
+      // 'all' means no extra filter
     }
 
     // Sort complaints
@@ -159,7 +201,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     });
 
     setFilteredComplaints(filtered);
-  }, [complaints, searchTerm, statusFilter, roleFilter, sortBy]);
+  }, [complaints, searchQuery, statusFilter, departmentFilter, complaintTypeFilter, sortBy, userRole, currentUser]);
 
   const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
     // Simulate API call
@@ -193,7 +235,6 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold mb-2">Complaint Management</h2>
@@ -209,111 +250,55 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            <div className="text-sm text-muted-foreground">Pending</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">{stats.inProgress}</div>
-            <div className="text-sm text-muted-foreground">In Progress</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-            <div className="text-sm text-muted-foreground">Resolved</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-            <div className="text-sm text-muted-foreground">Rejected</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by title or complaint #"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Role Filter */}
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {ROLES.map(role => (
-                  <SelectItem key={role.id} value={role.name}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">Latest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredComplaints.length} of {complaints.length} complaints
-        </p>
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {statusFilter !== 'all' && `Status: ${statusFilter}`}
-            {roleFilter !== 'all' && ` • Role: ${roleFilter}`}
-            {searchTerm && ` • Search: "${searchTerm}"`}
-          </span>
+      {/* Filters & Search - all users get 3 fields, HR/DevOps get a 4th field */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by request number, title, or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="In-progress">In Progress</SelectItem>
+            <SelectItem value="Resolved">Resolved</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All Departments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Departments</SelectItem>
+            <SelectItem value="hr">HR</SelectItem>
+            <SelectItem value="devops">DevOps</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="engineering">Engineering</SelectItem>
+            <SelectItem value="marketing">Marketing</SelectItem>
+            <SelectItem value="finance">Finance</SelectItem>
+            <SelectItem value="sales">Sales</SelectItem>
+            <SelectItem value="support">Support</SelectItem>
+          </SelectContent>
+        </Select>
+        {(userRole === 'hr' || userRole === 'devops') && (
+          <Select value={complaintTypeFilter} onValueChange={setComplaintTypeFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Complaints" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Complaints</SelectItem>
+              <SelectItem value="my-complaints">My Complaints</SelectItem>
+              <SelectItem value="to-handle">Complaints to Handle</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Complaints List */}

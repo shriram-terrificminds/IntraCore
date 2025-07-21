@@ -108,15 +108,17 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-semibold text-lg">{complaint.title}</h3>
+              <div className="flex items-center gap-3 mb-3">
+                <Badge variant="outline" className="font-mono">
+                  REQ-{complaint.id.toString().padStart(3, '0')}
+                </Badge>
                 <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
                   {getStatusIcon(complaint.resolution_status)}
                   <span className="ml-1">{complaint.resolution_status}</span>
                 </Badge>
                 <Badge variant="outline">{complaint.role.name}</Badge>
               </div>
-              
+              <h3 className="font-semibold text-lg mb-2">{complaint.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
             </div>
 
