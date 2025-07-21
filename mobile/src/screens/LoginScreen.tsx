@@ -34,7 +34,6 @@ const LoginScreen: React.FC = () => {
     try {
       await signIn(email, password, remember);
       Alert.alert('Success', 'Login successful!');
-      navigation.replace('Dashboard');
     } catch (e: any) {
       const msg = e && typeof e === 'object' && 'message' in e ? e.message : String(e);
       setError(msg || 'Login failed');
