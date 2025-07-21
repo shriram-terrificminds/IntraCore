@@ -38,16 +38,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (username: string, password: string, remember = false, onLogin?: () => void) => {
     setLoading(true);
-    // simulate API call delay
-    await new Promise(res => setTimeout(res, 1000));
-    const dummyToken = `token-${username}`;
-    if (remember) {
-      await AsyncStorage.setItem('userToken', dummyToken);
+    try {
+      const url = 'http://10.0.2.2:8000/api/auth/login';
+      const body = {
+        email: username,
+        password,
+        remember_me: remember,
+      };
+      console.log('Login request:', url, body);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      let data;
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch (jsonErr) {
+        console.error('Non-JSON response:', text);
+        throw new Error('Server did not return JSON.');
+      }
+      console.log('Login response:', data);
+
+      if (!response.ok) {
+        console.error('Login failed:', data);
+        throw new Error(data.message || 'Login failed');
+      }
+
+      const token = data.token;
+      if (remember) {
+        await AsyncStorage.setItem('userToken', token);
+      }
+      setTokenState(token);
+      setUser({ email: username, role: data.user || 'Employee' });
+      if (onLogin) onLogin();
+    } catch (err: any) {
+      console.error('Login error:', err);
+      throw new Error(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-    setTokenState(dummyToken);
-    setUser({ email: username, role: 'Employee' }); // Dummy role
-    setLoading(false);
-    if (onLogin) onLogin();
   };
 
   const signOut = async () => {

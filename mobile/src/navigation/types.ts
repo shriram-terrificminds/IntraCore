@@ -10,5 +10,6 @@ export type RootStackParamList = {
     ComplaintForm: { notificationPayload?: any } | undefined;
     ComplaintDetail: { notificationPayload?: any } | undefined;
     Profile: undefined;
+    ForgotPassword: undefined;
   };
   

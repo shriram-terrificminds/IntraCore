@@ -12,6 +12,7 @@ import ComplaintsList from '../screens/ComplaintsList';
 import ComplaintForm from '../screens/ComplaintForm';
 import ComplaintDetail from '../screens/ComplaintDetail';
 import ProfileScreen from '../screens/ProfileScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../contexts/AuthContext';
 import { RootStackParamList } from './types';
@@ -71,6 +72,7 @@ export default function Navigation() {
   ) : (
     <AuthStackNav.Navigator screenOptions={{ headerShown: false }}>
       <AuthStackNav.Screen name="Login" component={LoginScreen} />
+      <AuthStackNav.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </AuthStackNav.Navigator>
   );
 }

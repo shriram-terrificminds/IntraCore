@@ -9,13 +9,13 @@ import {
   Switch,
   StyleSheet,
   Linking,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../navigation';
 
-type LoginNavProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type LoginNavProp = StackNavigationProp<any, 'Login'>;
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavProp>();
@@ -30,13 +30,16 @@ const LoginScreen: React.FC = () => {
   const handleLogin = async () => {
     setLoading(true);
     setError('');
+    console.log('Attempting login with:', { email, password, remember });
     try {
-      // your dummy signIn now takes the remember flag too
       await signIn(email, password, remember);
-      // go to Dashboard (replace so user can't back‑nav to login)
+      Alert.alert('Success', 'Login successful!');
       navigation.replace('Dashboard');
-    } catch (e) {
-      setError('Login failed');
+    } catch (e: any) {
+      const msg = e && typeof e === 'object' && 'message' in e ? e.message : String(e);
+      setError(msg || 'Login failed');
+      console.error('Login failed:', e);
+      Alert.alert('Login Failed', msg || 'Login failed. Please try again.');
     }
     setLoading(false);
   };
@@ -69,14 +72,16 @@ const LoginScreen: React.FC = () => {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Button
-        title={loading ? 'Logging in...' : 'Login'}
+      <TouchableOpacity
+        style={styles.button}
         onPress={handleLogin}
         disabled={loading}
-      />
+      >
+        <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => Linking.openURL('https://your-backend/reset')}
+        onPress={() => navigation.navigate('ForgotPassword')}
         style={styles.forgotBtn}
       >
         <Text style={styles.forgotText}>Forgot Password?</Text>
@@ -86,21 +91,77 @@ const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 24 },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#f8fafc',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    color: '#1e293b',
+    letterSpacing: 1,
+  },
   input: {
     width: '100%',
     maxWidth: 320,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 12,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  rememberRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  error: { color: 'red', marginBottom: 8 },
-  forgotBtn: { marginTop: 16 },
-  forgotText: { color: '#007AFF' },
+  error: {
+    color: '#ef4444',
+    marginBottom: 8,
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  forgotBtn: {
+    marginTop: 16,
+  },
+  forgotText: {
+    color: '#2563eb',
+    fontWeight: '500',
+    fontSize: 15,
+  },
+  button: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
+    letterSpacing: 0.5,
+  },
 });
 
 export default LoginScreen;
