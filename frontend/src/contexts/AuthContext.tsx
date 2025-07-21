@@ -15,6 +15,8 @@ interface AuthContextType {
     location: string
   ) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<boolean>;
+  resetPassword: (token: string, email: string, password: string, password_confirmation: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,6 +70,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      await authService.forgotPassword(email);
+      return true;
+    } catch (error) {
+      console.error('Forgot password failed:', error);
+      return false;
+    }
+  };
+
+  const resetPassword = async (token: string, email: string, password: string, password_confirmation: string) => {
+    try {
+      await authService.resetPassword(token, email, password, password_confirmation);
+      return true;
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -76,6 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}

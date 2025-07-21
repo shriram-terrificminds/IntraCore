@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title', 100)->required();
             $table->text('description', 2000)->required();
             $table->text('resolution_notes')->nullable();
-            $table->enum('resolution_status', ['Pending', 'Resolved', 'Unresolved', 'Rejected'])->default('Pending');
+            $table->enum('resolution_status', ['Pending', 'Resolved', 'In-progress', 'Rejected'])->default('Pending');
             $table->unsignedBigInteger('resolved_by')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
@@ -36,4 +36,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('complaints');
     }
-}; 
+};

@@ -11,7 +11,7 @@ class Role extends Model
     use HasFactory;
 
     public $timestamps = false;
-    
+
     protected $fillable = [
         'name'
     ];
@@ -35,4 +35,4 @@ class Role extends Model
     {
         return $this->hasMany(Configuration::class);
     }
-} 
+}

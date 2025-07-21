@@ -23,4 +23,4 @@ class Configuration extends Model
     {
         return $this->belongsTo(Location::class);
     }
-} 
+}

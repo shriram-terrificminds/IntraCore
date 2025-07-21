@@ -31,4 +31,4 @@ class Broadcast extends Model
     {
         return $this->belongsTo(Role::class, 'target_role_id');
     }
-} 
+}

@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InventoryRequest;
 use App\Models\Complaint;
+use App\Models\InventoryRequest;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * @SuppressWarnings(PHPMD.ElseExpression)
+     */
     public function stats(Request $request)
     {
         $user = Auth::user();
@@ -58,4 +61,4 @@ class DashboardController extends Controller
 
         return response()->json($data);
     }
-} 
+}

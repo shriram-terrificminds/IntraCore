@@ -60,6 +60,7 @@ IntraCore/
    ```bash
    docker compose exec backend composer install
    docker compose exec backend php artisan migrate
+   docker compose exec backend php artisan migrate:fresh --seed # Optional - to reset tables once again
    ```
 
 4. Access the application:
@@ -70,6 +71,11 @@ IntraCore/
 
 ## Testing
 
+### Backend linting check
+
+```shell
+docker compose run --rm backend /bin/bash -c "vendor/bin/phpcs app config database routes tests && vendor/bin/phpmd app ansi rulesets.xml && vendor/bin/phpstan analyse app"
+```
 
 ## Contributing
 
