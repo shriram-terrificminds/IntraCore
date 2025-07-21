@@ -11,7 +11,7 @@ class Location extends Model
     use HasFactory;
 
     public $timestamps = false;
-    
+
     protected $fillable = [
         'name'
     ];
@@ -30,4 +30,4 @@ class Location extends Model
     {
         return $this->hasMany(Configuration::class);
     }
-} 
+}

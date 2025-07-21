@@ -26,6 +26,7 @@ class PasswordSuccessfullyReset extends Notification implements ShouldQueue
      *
      * @param  mixed  $notifiable
      * @return array
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function via($notifiable)
     {
@@ -37,6 +38,7 @@ class PasswordSuccessfullyReset extends Notification implements ShouldQueue
      *
      * @param  mixed  $notifiable
      * @return \Illuminate\Notifications\Messages\MailMessage
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function toMail($notifiable)
     {
@@ -52,6 +54,7 @@ class PasswordSuccessfullyReset extends Notification implements ShouldQueue
      *
      * @param  mixed  $notifiable
      * @return array
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function toArray($notifiable)
     {
@@ -59,4 +62,4 @@ class PasswordSuccessfullyReset extends Notification implements ShouldQueue
             //
         ];
     }
-} 
+}

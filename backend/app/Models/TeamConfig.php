@@ -14,4 +14,4 @@ class TeamConfig extends Model
         'location',
         'email',
     ];
-} 
+}

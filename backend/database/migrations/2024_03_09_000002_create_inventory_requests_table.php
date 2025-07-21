@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('request_number', 100)->required()->unique();
             $table->string('title', 100)->required();
             $table->text('description', 2000)->required();
-            $table->enum('status', ['Pending', 'Approved', 'Shipped', 'Recieved'])->default('Pending');
+            $table->enum('status', ['Pending', 'Approved', 'Shipped', 'Received', 'Rejected'])->default('Pending');
             $table->unsignedBigInteger('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
@@ -35,4 +35,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('inventory_requests');
     }
-}; 
+};

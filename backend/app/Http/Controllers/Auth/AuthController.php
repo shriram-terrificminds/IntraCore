@@ -109,8 +109,6 @@ class AuthController extends Controller
                 return response()->json(['message' => 'The password reset token is invalid or expired.'], 400);
             } elseif ($status === Password::INVALID_USER) {
                 return response()->json(['message' => 'We could not find a user with that email address.'], 400);
-            } elseif ($status === Password::INVALID_PASSWORD) {
-                 return response()->json(['message' => 'The provided password is invalid.'], 400);
             }
             return response()->json(['message' => $message], 400);
         }

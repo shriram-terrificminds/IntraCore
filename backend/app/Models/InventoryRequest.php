@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InventoryRequestStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,7 @@ class InventoryRequest extends Model
 
     protected $casts = [
         'approved_at' => 'datetime',
+        'status' => InventoryRequestStatusEnum::class,
     ];
 
     public function user(): BelongsTo
@@ -39,4 +41,4 @@ class InventoryRequest extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
-} 
+}
