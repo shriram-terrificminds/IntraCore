@@ -1,145 +1,278 @@
 
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ReportFilterForm, ReportFilters } from './ReportFilterForm';
-import { ReportTable, ReportTableColumn } from './ReportTable';
-import { ReportSummary } from './ReportSummary';
-import * as XLSX from 'xlsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart, LineChart, PieChart, Download } from 'lucide-react';
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, Pie, Cell } from 'recharts';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { ExportDialog } from './ExportDialog';
+import { ReportsSummary } from './ReportsSummary';
+import { Label } from '@/components/ui/label';
 
-// Mock data for demonstration
-const MOCK_INVENTORY = [
-  { id: 1, title: 'Laptop Request', status: 'Resolved', assignedRole: 'hr', date: '2024-06-01', resolutionNote: 'Delivered', location: 'TVM' },
-  { id: 2, title: 'Monitor Request', status: 'Pending', assignedRole: 'devops', date: '2024-06-05', resolutionNote: '', location: 'Ernakulam' },
-  { id: 3, title: 'Keyboard', status: 'Rejected', assignedRole: 'hr', date: '2024-06-10', resolutionNote: 'Out of stock', location: 'Bangalore' },
-];
-const MOCK_COMPLAINTS = [
-  { id: 101, title: 'WiFi Issue', status: 'In Progress', assignedRole: 'devops', date: '2024-06-03', resolutionNote: '', location: 'TVM' },
-  { id: 102, title: 'AC Not Working', status: 'Resolved', assignedRole: 'hr', date: '2024-06-07', resolutionNote: 'Fixed', location: 'Ernakulam' },
-  { id: 103, title: 'Broken Chair', status: 'Pending', assignedRole: 'devops', date: '2024-06-12', resolutionNote: '', location: 'Bangalore' },
-];
-
-const INVENTORY_COLUMNS: ReportTableColumn[] = [
-  { key: 'id', label: 'Request No.' },
-  { key: 'title', label: 'Title' },
-  { key: 'status', label: 'Status' },
-  { key: 'assignedRole', label: 'Role' },
-  { key: 'location', label: 'Location' },
-  { key: 'date', label: 'Date' },
-  { key: 'resolutionNote', label: 'Resolution Note' },
-];
-const COMPLAINTS_COLUMNS: ReportTableColumn[] = [
-  { key: 'id', label: 'Request No.' },
-  { key: 'title', label: 'Title' },
-  { key: 'status', label: 'Status' },
-  { key: 'assignedRole', label: 'Role' },
-  { key: 'location', label: 'Location' },
-  { key: 'date', label: 'Date' },
-  { key: 'resolutionNote', label: 'Resolution Note' },
-];
-
-function filterData<T extends { date: string; assignedRole: string; location: string }>(data: T[], filters: ReportFilters | null, type: 'inventory' | 'complaints'): T[] {
-  if (!filters) return data;
-  return data.filter(row => {
-    // Report type
-    if (filters.reportType !== 'all' && filters.reportType !== type) return false;
-    // Assigned Role
-    if (filters.role !== 'all' && row.assignedRole !== filters.role) return false;
-    // Location
-    if (filters.location && filters.location !== 'All' && row.location !== filters.location) return false;
-    // Date range
-    if (filters.dateRange) {
-      if (filters.dateRange.from && row.date < filters.dateRange.from) return false;
-      if (filters.dateRange.to && row.date > filters.dateRange.to) return false;
-    }
-    return true;
-  });
+interface ReportsProps {
+  userRole: UserRole;
 }
 
-function getSummary(inventory: typeof MOCK_INVENTORY, complaints: typeof MOCK_COMPLAINTS) {
-  return {
-    totalRequests: inventory.length,
-    totalComplaints: complaints.length,
-    resolved: inventory.filter(i => i.status === 'Resolved').length + complaints.filter(c => c.status === 'Resolved').length,
-    rejected: inventory.filter(i => i.status === 'Rejected').length + complaints.filter(c => c.status === 'Rejected').length,
-    pending: inventory.filter(i => i.status === 'Pending').length + complaints.filter(c => c.status === 'Pending').length,
-    inProgress: complaints.filter(c => c.status === 'In Progress').length,
-  };
+interface ReportDataPoint {
+  name: string;
+  value: number;
 }
 
-function exportToExcel(data: any[], columns: ReportTableColumn[], filename: string, sheetName: string) {
-  const exportData = data.map(row => {
-    const obj: Record<string, any> = {};
-    columns.forEach(col => {
-      let value = row[col.key];
-      if (value === undefined || value === null) value = '';
-      obj[col.label] = typeof value === 'object' ? JSON.stringify(value) : value;
-    });
-    return obj;
-  });
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filename);
-}
+export function Reports({ userRole }: ReportsProps) {
+  const [reportType, setReportType] = useState('inventory');
+  const [timeRange, setTimeRange] = useState('monthly');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
-export function Reports({ userRole = 'admin', assignedLocations = ['TVM', 'Ernakulam'] }: { userRole?: 'admin' | 'hr' | 'devops' | 'employee', assignedLocations?: string[] }) {
-  const [filters, setFilters] = useState<ReportFilters | null>(null);
-  const [tab, setTab] = useState<'inventory' | 'complaints' | 'all'>('inventory');
-
-  const filteredInventory = filterData(MOCK_INVENTORY, filters, 'inventory');
-  const filteredComplaints = filterData(MOCK_COMPLAINTS, filters, 'complaints');
-  const summary = getSummary(filteredInventory, filteredComplaints);
-
-  const handleDownload = (type: 'inventory' | 'complaints') => {
-    if (type === 'inventory') {
-      exportToExcel(filteredInventory, INVENTORY_COLUMNS, 'Inventory.xlsx', 'Inventory');
-    } else {
-      exportToExcel(filteredComplaints, COMPLAINTS_COLUMNS, 'Complaints.xlsx', 'Complaints');
+  // Dummy Data - In a real application, this would come from API calls
+  const getReportData = () => {
+    switch (reportType) {
+      case 'inventory':
+        return {
+          title: 'Inventory Overview',
+          description: 'Summary of inventory requests and approvals.',
+          chartData: [
+            { name: 'Laptops', requested: 120, approved: 100 },
+            { name: 'Monitors', requested: 80, approved: 70 },
+            { name: 'Keyboards', requested: 50, approved: 45 },
+            { name: 'Mice', requested: 60, approved: 55 },
+          ],
+          summary: [
+            { label: 'Total Requests', value: 310 },
+            { label: 'Approved', value: 270 },
+            { label: 'Pending', value: 40 },
+            { label: 'Rejected', value: 10 },
+          ],
+        };
+      case 'complaints':
+        return {
+          title: 'Complaint Analysis',
+          description: 'Breakdown of complaint statuses and categories.',
+          chartData: [
+            { name: 'Open', value: 30 },
+            { name: 'In Progress', value: 20 },
+            { name: 'Resolved', value: 150 },
+            { name: 'Closed', value: 100 },
+          ],
+          summary: [
+            { label: 'Total Complaints', value: 300 },
+            { label: 'Resolved', value: 250 },
+            { label: 'Open', value: 50 },
+            { label: 'Average Resolution Time', value: '3 days' },
+          ],
+        };
+      case 'users':
+        return {
+          title: 'User Demographics',
+          description: 'Distribution of users by role and location.',
+          chartData: [
+            { name: 'Admin', value: 5 },
+            { name: 'Member', value: 150 },
+            { name: 'DevOps', value: 20 },
+            { name: 'HR', value: 10 },
+          ],
+          summary: [
+            { label: 'Total Users', value: 185 },
+            { label: 'Active Users', value: 170 },
+            { label: 'New Users (Last 30 Days)', value: 5 },
+            { label: 'Locations', value: 3 },
+          ],
+        };
+      default:
+        return { title: '', description: '', chartData: [], summary: [] };
     }
   };
+
+  const reportData = getReportData();
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-2">Reports</h2>
-      <ReportFilterForm userRole={userRole} assignedLocations={assignedLocations} onFilter={setFilters} />
-      <ReportSummary summary={summary} />
-      <Tabs value={tab} onValueChange={v => setTab(v as any)}>
-        <TabsList>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="complaints">Complaints</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-        </TabsList>
-        <TabsContent value="inventory">
-          <ReportTable
-            columns={INVENTORY_COLUMNS}
-            data={filteredInventory}
-            tableTitle="Inventory Requests"
-            onDownload={() => handleDownload('inventory')}
-          />
-        </TabsContent>
-        <TabsContent value="complaints">
-          <ReportTable
-            columns={COMPLAINTS_COLUMNS}
-            data={filteredComplaints}
-            tableTitle="Complaints"
-            onDownload={() => handleDownload('complaints')}
-          />
-        </TabsContent>
-        <TabsContent value="all">
-          <ReportTable
-            columns={INVENTORY_COLUMNS}
-            data={filteredInventory}
-            tableTitle="Inventory Requests"
-            onDownload={() => handleDownload('inventory')}
-          />
-          <ReportTable
-            columns={COMPLAINTS_COLUMNS}
-            data={filteredComplaints}
-            tableTitle="Complaints"
-            onDownload={() => handleDownload('complaints')}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Reports & Analytics</h1>
+          <p className="text-muted-foreground">
+            Generate and analyze data for better insights
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {['admin', 'hr'].includes(userRole) && (
+            <Button onClick={() => setExportDialogOpen(true)} className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Report Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Filters</CardTitle>
+          <CardDescription>Select report type, time range, and custom dates.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="report-type">Report Type</Label>
+            <Select value={reportType} onValueChange={setReportType}>
+              <SelectTrigger id="report-type">
+                <SelectValue placeholder="Select report type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inventory">Inventory</SelectItem>
+                <SelectItem value="complaints">Complaints</SelectItem>
+                <SelectItem value="users">Users</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time-range">Time Range</Label>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger id="time-range">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="annually">Annually</SelectItem>
+                <SelectItem value="custom">Custom Date Range</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {timeRange === 'custom' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {startDate ? format(startDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {endDate ? format(endDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reports Summary and Charts */}
+      <ReportsSummary reportData={reportData} userRole={userRole} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{reportData.title}</CardTitle>
+          <CardDescription>{reportData.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              {reportType === 'inventory' ? (
+                <BarChart data={reportData.chartData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="requested" fill="#8884d8" name="Requested" />
+                  <Bar dataKey="approved" fill="#82ca9d" name="Approved" />
+                </BarChart>
+              ) : reportType === 'complaints' ? (
+                <PieChart>
+                  <Pie
+                    data={reportData.chartData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={150}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label
+                  >
+                    {reportData.chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              ) : reportType === 'users' ? (
+                <PieChart>
+                  <Pie
+                    data={reportData.chartData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={150}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label
+                  >
+                    {reportData.chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              ) : (
+                <LineChart data={[]}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="value" stroke="#8884d8" />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+      <ExportDialog 
+        open={exportDialogOpen} 
+        onOpenChange={setExportDialogOpen}
+        reportType={reportType}
+        timeRange={timeRange}
+        startDate={startDate}
+        endDate={endDate}
+      />
     </div>
   );
 }

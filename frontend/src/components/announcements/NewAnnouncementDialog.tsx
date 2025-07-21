@@ -23,9 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 interface NewAnnouncementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (title: string, content: string, location: string, status: 'Published' | 'Draft' | 'Archived') => void;
 }
 
-export function NewAnnouncementDialog({ open, onOpenChange }: NewAnnouncementDialogProps) {
+export function NewAnnouncementDialog({ open, onOpenChange, onSubmit }: NewAnnouncementDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -40,6 +41,7 @@ export function NewAnnouncementDialog({ open, onOpenChange }: NewAnnouncementDia
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    onSubmit(formData.title, formData.content, formData.location, 'Published'); // Assuming 'Published' as default status
     toast({
       title: "Announcement Published",
       description: "Your announcement has been published successfully.",

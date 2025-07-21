@@ -8,7 +8,8 @@ interface User {
   lastName: string;
   email: string;
   location: string;
-  role: number; // 1=Admin, 2=HR, 3=DevOps, 4=Employee
+  joinedDate: string;
+  role: UserRole;
   profileImage?: string;
   joinedDate: string;
   lastEditedBy: string;

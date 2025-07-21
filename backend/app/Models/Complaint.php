@@ -14,6 +14,8 @@ class Complaint extends Model
     protected $fillable = [
         'user_id',
         'role_id',
+        'complaint_number',
+        'title',
         'description',
         'resolution_notes',
         'resolution_status',
@@ -21,8 +23,8 @@ class Complaint extends Model
         'resolved_at'
     ];
 
-    protected $dates = [
-        'resolved_at'
+    protected $casts = [
+        'resolved_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

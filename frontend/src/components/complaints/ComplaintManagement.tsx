@@ -16,9 +16,10 @@ import {
 import { NewComplaintDialog } from './NewComplaintDialog';
 import { ComplaintCard } from './ComplaintCard';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '../../types'; // Import User to get UserRole
 
 interface ComplaintManagementProps {
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
+  userRole: User['role']; // Corrected type for userRole
 }
 
 // Mock data for demonstration
@@ -103,7 +104,6 @@ const ROLES = [
   { id: 2, name: 'HR' },
   { id: 3, name: 'DevOps' },
   { id: 4, name: 'Employee' },
-  { id: 5, name: 'Manager' },
 ];
 
 const STATUS_OPTIONS = [
@@ -124,6 +124,20 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const [complaintTypeFilter, setComplaintTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
   const { toast } = useToast();
+
+  const [newComplaintOpen, setNewComplaintOpen] = useState(false); // Initialize state
+
+  const handleNewComplaint = (newComplaint: any) => { // Placeholder function
+    // This will be replaced with actual API call later
+    console.log('New complaint:', newComplaint);
+    // For now, just add to mock data
+    setComplaints(prev => [...prev, { ...newComplaint, id: prev.length + 1, created_at: new Date().toISOString(), resolution_status: 'Pending', role: { name: userRole }, user: { name: 'Current User' } }]);
+    setNewComplaintOpen(false);
+    toast({
+      title: 'Complaint Submitted',
+      description: 'Your complaint has been successfully submitted.',
+    });
+  };
 
   const currentUser = 'Alex Brown'; // Replace with actual current user in real app
 
@@ -237,13 +251,13 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Complaint Management</h2>
+          <h1 className="text-3xl font-bold tracking-tight">Complaint Management</h1>
           <p className="text-muted-foreground">
-            Track and resolve office complaints efficiently
+            Track and resolve employee complaints
           </p>
         </div>
-        {(userRole === 'member' || userRole === 'devops' || userRole === 'hr' || userRole === 'admin') && (
-          <Button onClick={() => setShowNewComplaint(true)}>
+        {(userRole === 'employee' || userRole === 'devops' || userRole === 'hr' || userRole === 'admin') && ( // Corrected 'member' to 'employee'
+          <Button onClick={() => setNewComplaintOpen(true)}> {/* Changed to setNewComplaintOpen */}
             <Plus className="h-4 w-4 mr-2" />
             New Complaint
           </Button>
@@ -323,8 +337,9 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
 
       {/* New Complaint Dialog */}
       <NewComplaintDialog 
-        open={showNewComplaint} 
-        onOpenChange={setShowNewComplaint}
+        open={newComplaintOpen} 
+        onOpenChange={setNewComplaintOpen}
+        onSubmit={handleNewComplaint}
       />
     </div>
   );
