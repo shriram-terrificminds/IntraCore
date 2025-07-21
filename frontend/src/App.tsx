@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ComplaintsDemo from "./pages/ComplaintsDemo";
+import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
+import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
 
 
 const queryClient = new QueryClient();
@@ -18,7 +20,16 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Index />} /> {/* Add this route for login page */}
           <Route path="/complaints" element={<ComplaintsDemo />} />
+          <Route
+            path="/reset-password"
+            element={<ResetPasswordForm onBackToLogin={() => window.location.href = '/'} />}
+          />
+           <Route
+            path="/forgot-password"
+            element={<ForgotPasswordForm onBackToLogin={() => window.location.href = '/'} />}
+          />
 
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
