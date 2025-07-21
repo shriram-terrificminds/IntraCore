@@ -23,9 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 interface NewRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (item: string, quantity: number) => void;
 }
 
-export function NewRequestDialog({ open, onOpenChange }: NewRequestDialogProps) {
+export function NewRequestDialog({ open, onOpenChange, onSubmit }: NewRequestDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     department: '',
@@ -35,36 +36,7 @@ export function NewRequestDialog({ open, onOpenChange }: NewRequestDialogProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.title.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a title for your request",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.department) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a department",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please provide a description for your request",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Success toast
+    onSubmit(formData.item, 1); // Assuming quantity is always 1 for now or derive from form
     toast({
       title: "Request Submitted",
       description: `Your inventory request "${formData.title}" has been submitted successfully.`,

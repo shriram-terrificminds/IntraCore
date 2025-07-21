@@ -1,26 +1,38 @@
 
-import { Bell, User } from 'lucide-react';
+import { Bell, User, LogOut, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+// import { SidebarTrigger } from '@/components/ui/sidebar'; // Removed as sidebar is always visible
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
-  userRole: 'admin' | 'employee' | 'devops' | 'hr';
-  setUserRole: (role: 'admin' | 'employee' | 'devops' | 'hr') => void;
+  // userRole: UserRole; // This prop will now be derived from AuthContext.user.role
+  // setUserRole: (role: UserRole) => void; // No longer needed as role is from auth context
 }
 
-export function Header({ userRole, setUserRole }: HeaderProps) {
-  const handleProfileClick = () => {
-    const roles: ('admin' | 'employee' | 'devops' | 'hr')[] = ['admin', 'employee', 'devops', 'hr'];
-    const currentIndex = roles.indexOf(userRole);
-    const nextIndex = (currentIndex + 1) % roles.length;
-    setUserRole(roles[nextIndex]);
-  };
+export function Header({}: HeaderProps) {
+  const { user, logout } = useAuth();
+
+  // const handleProfileClick = () => {
+  //   const roles: UserRole[] = ['admin', 'employee', 'devops', 'hr', 'member'];
+  //   const currentIndex = roles.indexOf(userRole);
+  //   const nextIndex = (currentIndex + 1) % roles.length;
+  //   setUserRole(roles[nextIndex]);
+  // };
 
   return (
     <header className="h-16 border-b bg-background flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <SidebarTrigger />
+        {/* <SidebarTrigger /> */}
         <div>
           <h1 className="text-xl font-semibold">IntraCore</h1>
           <p className="text-sm text-muted-foreground">Inventory & Complaint Management</p>
@@ -35,14 +47,40 @@ export function Header({ userRole, setUserRole }: HeaderProps) {
           </Badge>
         </Button>
 
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleProfileClick}
-          title={`Current role: ${userRole.toUpperCase()} - Click to switch roles`}
-        >
-          <User className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="relative h-10 w-10 rounded-full"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user?.profile_image} alt={`${user?.first_name} ${user?.last_name}`} />
+                <AvatarFallback>{user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                  <User className="h-3 w-3" /> {user?.role.name}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" /> {user?.location.name}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

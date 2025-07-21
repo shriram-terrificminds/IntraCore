@@ -36,6 +36,7 @@ IntraCore is a comprehensive office management system designed to streamline ope
 IntraCore/
 ├── frontend/          # React + TypeScript frontend
 ├── backend/           # Laravel backend
+|── mobile/            # React native mobile
 ```
 
 ## Prerequisites
@@ -63,17 +64,19 @@ IntraCore/
 
 4. Access the application:
    - Frontend: http://localhost:8050
-   - Backend API: http://localhost:8000
+   - Backend: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs/api
+   - Mailhog (Email Viewer): http://localhost:8025
 
 ## Testing
 
 
 ## Contributing
 
-1. Create a feature branch
+1. Create a feature OR bugfix branch from `development`
 2. Commit your changes
 3. Push to the branch
-4. Create a Pull Request
+4. Create a Pull Request to `development`
 
 ## License
 

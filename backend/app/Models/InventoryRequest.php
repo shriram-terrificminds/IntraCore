@@ -10,21 +10,19 @@ class InventoryRequest extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
-
     protected $fillable = [
         'user_id',
         'role_id',
+        'request_number',
+        'title',
         'description',
         'status',
         'approved_by',
         'approved_at'
     ];
 
-    protected $dates = [
-        'requested_at',
-        'updated_at',
-        'approved_at'
+    protected $casts = [
+        'approved_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

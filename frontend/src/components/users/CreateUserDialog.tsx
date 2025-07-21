@@ -26,7 +26,15 @@ interface User {
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateUser: (userData: Partial<User>) => void;
+  onCreateUser: (userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    location: string;
+    joinedDate: string;
+    role: UserRole;
+    profileImage?: string;
+  }) => void;
 }
 
 export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUserDialogProps) {
@@ -35,9 +43,8 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
     lastName: '',
     email: '',
     location: '',
-    role: 4, // Default to Employee
-    profileImage: '',
-    password: ''
+    role: '' as UserRole,
+    profileImage: ''
   });
 
   const { toast } = useToast();
@@ -75,9 +82,8 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
       lastName: '',
       email: '',
       location: '',
-      role: 4,
-      profileImage: '',
-      password: ''
+      role: '' as UserRole,
+      profileImage: ''
     });
 
     onOpenChange(false);
@@ -193,8 +199,8 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
 
           <div className="space-y-2">
             <Label htmlFor="role">Role *</Label>
-            <Select value={formData.role.toString()} onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, role: parseInt(value) }))
+            <Select value={formData.role} onValueChange={(value: UserRole) => 
+              setFormData(prev => ({ ...prev, role: value }))
             }>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />

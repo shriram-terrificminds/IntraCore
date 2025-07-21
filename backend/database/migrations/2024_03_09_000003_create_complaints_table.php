@@ -12,7 +12,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('role_id');
-            $table->text('description');
+            $table->string('complaint_number', 100)->required()->unique();
+            $table->string('title', 100)->required();
+            $table->text('description', 2000)->required();
             $table->text('resolution_notes')->nullable();
             $table->enum('resolution_status', ['Pending', 'Resolved', 'Unresolved', 'Rejected'])->default('Pending');
             $table->unsignedBigInteger('resolved_by')->nullable();

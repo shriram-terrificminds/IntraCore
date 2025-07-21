@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '../../types'; // Import User to get UserRole
 
 interface ComplaintCardProps {
   complaint: {
@@ -21,7 +22,7 @@ interface ComplaintCardProps {
     resolvedBy?: { name: string };
     images: Array<{ image_url: string }>;
   };
-  userRole: 'admin' | 'member' | 'devops' | 'hr';
+  userRole: User['role']; // Corrected type for userRole
   onStatusUpdate?: (complaintId: number, status: string, notes?: string) => void;
 }
 

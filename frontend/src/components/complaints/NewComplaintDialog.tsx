@@ -23,17 +23,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface NewComplaintDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (subject: string, description: string) => void;
 }
 
+// Define ROLES here as it's used in this component
 const ROLES = [
-  { id: 1, name: 'Admin' },
   { id: 2, name: 'HR' },
   { id: 3, name: 'DevOps' },
-  { id: 4, name: 'Employee' },
-  { id: 5, name: 'Manager' },
 ];
 
-export function NewComplaintDialog({ open, onOpenChange }: NewComplaintDialogProps) {
+export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplaintDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     role_id: '',
@@ -116,57 +115,21 @@ export function NewComplaintDialog({ open, onOpenChange }: NewComplaintDialogPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: 'Complaint Submitted',
-        description: 'Your complaint has been submitted and will be reviewed shortly.',
-      });
-      
-      // Reset form
-      setFormData({
-        title: '',
-        role_id: '',
-        description: '',
-      });
-      setImages([]);
-      setErrors({});
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit complaint. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!isSubmitting) {
-      setFormData({
-        title: '',
-        role_id: '',
-        description: '',
-      });
-      setImages([]);
-      setErrors({});
-      onOpenChange(false);
-    }
+    onSubmit(formData.title, formData.description);
+    toast({
+      title: "Complaint Submitted",
+      description: "Your complaint has been submitted and will be reviewed shortly.",
+    });
+    onOpenChange(false);
+    setFormData({
+      title: '',
+      role_id: '',
+      description: '',
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Submit New Complaint</DialogTitle>
@@ -292,11 +255,11 @@ export function NewComplaintDialog({ open, onOpenChange }: NewComplaintDialogPro
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)} // Corrected onClick handler
               disabled={isSubmitting}
             >
               Cancel
