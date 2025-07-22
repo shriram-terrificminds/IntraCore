@@ -74,6 +74,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = data.token;
       if (remember) {
         await AsyncStorage.setItem('userToken', token);
+        console.log('[Auth] Token saved to AsyncStorage:', token);
+      } else {
+        await AsyncStorage.setItem('userToken', token);
+        console.log('[Auth] Token saved to AsyncStorage:', token);
       }
       setTokenState(token);
       setUser({ email: username, role: data.user || 'Employee' });

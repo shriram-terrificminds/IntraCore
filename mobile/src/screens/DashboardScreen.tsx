@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, FlatList } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
-const DUMMY_STATS = [
-  { label: 'My Requests', value: 5, icon: <MaterialCommunityIcons name="cube-outline" size={24} color="#3b82f6" /> },
-  { label: 'My Complaints', value: 2, icon: <MaterialIcons name="chat-bubble-outline" size={24} color="#f59e42" /> },
-  { label: 'Pending Requests', value: 7, icon: <MaterialIcons name="access-time" size={24} color="#f59e42" /> },
-  { label: 'Pending Complaints', value: 1, icon: <MaterialIcons name="error-outline" size={24} color="#ef4444" /> },
-];
+import client from '../utils/client';
 
 const DUMMY_ACTIVITY = [
   { id: '1', title: 'New mouse requested', user: 'John Doe', time: '2 hours ago', status: 'pending', color: '#3b82f6' },
@@ -31,22 +25,56 @@ const statusBadge = (status: string) => {
 };
 
 const DashboardScreen = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) {
+      console.log('[DashboardScreen] No token yet, skipping stats fetch.');
+      return;
+    }
+    const fetchStats = async () => {
+      setLoading(true);
+      console.log('[DashboardScreen] Using token:', token);
+      try {
+        const data = await client.get('/dashboard/stats');
+        setStats(data);
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+        setStats(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [token]);
+
+  const statCards = [
+    { label: 'My Requests', value: stats?.my_requests ?? 0, icon: <MaterialCommunityIcons name="cube-outline" size={24} color="#3b82f6" /> },
+    { label: 'My Complaints', value: stats?.my_complaints ?? 0, icon: <MaterialIcons name="chat-bubble-outline" size={24} color="#f59e42" /> },
+    { label: 'Pending Requests', value: stats?.pending_requests ?? 0, icon: <MaterialIcons name="access-time" size={24} color="#f59e42" /> },
+    { label: 'Pending Complaints', value: stats?.pending_complaints ?? 0, icon: <MaterialIcons name="error-outline" size={24} color="#ef4444" /> },
+  ];
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>Dashboard</Text>
       <Text style={styles.welcome}>Welcome back! Here's what's happening in your office.</Text>
       <View style={{ marginTop: 16 }}>
-        {DUMMY_STATS.map((stat, idx) => (
-          <View key={stat.label} style={styles.card}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={styles.cardLabel}>{stat.label}</Text>
-              {stat.icon}
+        {loading ? (
+          <ActivityIndicator size="large" color="#3b82f6" />
+        ) : (
+          statCards.map((stat, idx) => (
+            <View key={stat.label} style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.cardLabel}>{stat.label}</Text>
+                {stat.icon}
+              </View>
+              <Text style={styles.cardValue}>{stat.value}</Text>
             </View>
-            <Text style={styles.cardValue}>{stat.value}</Text>
-          </View>
-        ))}
+          ))
+        )}
       </View>
       <Text style={styles.sectionTitle}>Recent Activity</Text>
       <FlatList
