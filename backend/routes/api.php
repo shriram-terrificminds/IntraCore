@@ -5,6 +5,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryRequestController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserManagementController;
 
 Route::middleware('auth:sanctum')->get('/dashboard/stats', [DashboardController::class, 'stats']);
 
@@ -29,4 +30,15 @@ Route::middleware('auth:sanctum')->prefix('complaints')->group(function () {
     Route::post('/list', [ComplaintController::class, 'list']);
     Route::get('/{complaint}', [ComplaintController::class, 'show']);
     Route::patch('/{complaint}/status', [ComplaintController::class, 'updateStatus']);
+});
+
+// User Management (Admin only)
+Route::middleware(['auth:sanctum', 'admin'])->prefix('users')->group(function () {
+    Route::get('/', [UserManagementController::class, 'index']); // List users
+    Route::get('/{id}', [UserManagementController::class, 'show']); // Get user details
+    Route::post('/', [UserManagementController::class, 'store']); // Create user
+    Route::post('/list', [UserManagementController::class, 'list']); // Advanced search (optional)
+    Route::match(['put', 'patch'], '/{id}', [UserManagementController::class, 'update']); // Update user
+    Route::delete('/{id}', [UserManagementController::class, 'destroy']); // Delete user
+    Route::post('/{id}/restore', [UserManagementController::class, 'restore']); // Restore user
 });
