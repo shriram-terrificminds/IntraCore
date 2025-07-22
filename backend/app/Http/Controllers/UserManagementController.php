@@ -66,6 +66,8 @@ class UserManagementController extends Controller
             $user->profile_image = $request->file('profile_image')->store('profile_images', 'public');
         }
         $user->save();
+        // Send notification to the new user
+        $user->notify(new \App\Notifications\NewUserCreated($user, $validated['password']));
         return response()->json($user, 201);
     }
 
