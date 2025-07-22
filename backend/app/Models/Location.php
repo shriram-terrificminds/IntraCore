@@ -25,9 +25,4 @@ class Location extends Model
     {
         return $this->hasMany(Broadcast::class, 'target_location_id');
     }
-
-    public function configurations(): HasMany
-    {
-        return $this->hasMany(Configuration::class);
-    }
 }

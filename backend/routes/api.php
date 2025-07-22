@@ -4,8 +4,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryRequestController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserManagementController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/dashboard/stats', [DashboardController::class, 'stats']);
 

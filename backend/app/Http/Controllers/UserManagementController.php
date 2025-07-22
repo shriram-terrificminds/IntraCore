@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
 {
@@ -16,8 +15,9 @@ class UserManagementController extends Controller
     {
         $query = User::query();
 
+        $search = $request->input('search');
         // Search by name or email
-        if ($search = $request->input('search')) {
+        if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
                   ->orWhere('last_name', 'like', "%$search%")
@@ -25,13 +25,15 @@ class UserManagementController extends Controller
             });
         }
 
+        $roleId = $request->input('role_id');
         // Filter by role_id
-        if ($roleId = $request->input('role_id')) {
+        if ($roleId) {
             $query->where('role_id', $roleId);
         }
 
+        $locationId = $request->input('location_id');
         // Filter by location_id
-        if ($locationId = $request->input('location_id')) {
+        if ($locationId) {
             $query->where('location_id', $locationId);
         }
 
@@ -115,4 +117,4 @@ class UserManagementController extends Controller
         $user->restore();
         return response()->json(['message' => 'User restored']);
     }
-} 
+}
