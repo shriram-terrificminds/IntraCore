@@ -44,6 +44,9 @@ services:
       - MAIL_ENCRYPTION=null
       - MAIL_FROM_ADDRESS=noreply@intracore.com
       - MAIL_FROM_NAME=IntraCore
+      - ONESIGNAL_APP_ID=8f98d172-c3be-458b-b393-77fe637539ed
+      - ONESIGNAL_REST_API_KEY=os_v2_app_r6mnc4wdxzcyxm4to77gg5jz5vwmp3aubtfebyvramo25rjfakmrvw4aifikwxs3damz5ry7lltyg74cqp3mnjref5nrbm3cphyizxa
+      - ONESIGNAL_REST_API_URL=https://api.onesignal.com
     depends_on:
       - db
       - redis     

@@ -30,9 +30,4 @@ class Role extends Model
     {
         return $this->hasMany(Complaint::class);
     }
-
-    public function configurations(): HasMany
-    {
-        return $this->hasMany(Configuration::class);
-    }
 }
