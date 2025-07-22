@@ -42,3 +42,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('users')->group(function ()
     Route::delete('/{id}', [UserManagementController::class, 'destroy']); // Delete user
     Route::post('/{id}/restore', [UserManagementController::class, 'restore']); // Restore user
 });
+
+// Update OneSignal player_id for the authenticated user
+Route::middleware('auth:sanctum')->post('/users/player-id', [\App\Http\Controllers\UserController::class, 'updatePlayerId']);

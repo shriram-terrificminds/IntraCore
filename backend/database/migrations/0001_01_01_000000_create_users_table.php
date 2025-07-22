@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('role_id')->constrained();
             $table->foreignId('location_id')->constrained();
             $table->string('profile_image')->nullable();
+            $table->string('player_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

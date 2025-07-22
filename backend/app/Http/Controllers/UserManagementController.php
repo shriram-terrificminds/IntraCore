@@ -117,4 +117,14 @@ class UserManagementController extends Controller
         $user->restore();
         return response()->json(['message' => 'User restored']);
     }
+
+    // Update OneSignal player_id for the authenticated user
+    public function updatePlayerId(Request $request)
+    {
+        $request->validate(['player_id' => 'required|string']);
+        $user = $request->user();
+        $user->player_id = $request->player_id;
+        $user->save();
+        return response()->json(['message' => 'Player ID updated']);
+    }
 }
