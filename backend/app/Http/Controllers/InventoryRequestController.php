@@ -32,6 +32,16 @@ class InventoryRequestController extends Controller
             'status' => InventoryRequestStatusEnum::PENDING->value,
         ]);
 
+        // Notify all users of the assigned role
+        $roleUsers = \App\Models\User::where('role_id', $inventoryRequest->role_id)->get();
+        foreach ($roleUsers as $roleUser) {
+            $roleUser->notify(new \App\Notifications\RoleComplaintOrRequestRaised(
+                'request',
+                $inventoryRequest->title,
+                Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                $roleUser->role->name
+            ));
+        }
         return response()->json([
             'message' => 'Inventory request submitted successfully.',
             'request' => $inventoryRequest
@@ -124,7 +134,7 @@ class InventoryRequestController extends Controller
     {
         $user = Auth::user();
         $userRoleName = $user->role->name;
-        $currentStatus = $inventoryRequest->status;
+        $currentStatus = $inventoryRequest->status->value;
         $newStatus = $request->status;
 
         // Only Admin, HR, DevOps can update status in general, UNLESS it's an Employee receiving a shipped item.
@@ -183,6 +193,14 @@ class InventoryRequestController extends Controller
 
         $inventoryRequest->update($updateData);
 
+        // Notify request creator about status update
+        $requestCreator = $inventoryRequest->user;
+        $requestCreator->notify(new \App\Notifications\StatusUpdatedNotification(
+            'request',
+            $inventoryRequest->title,
+            $newStatus,
+            Auth::user()->first_name . ' ' . Auth::user()->last_name
+        ));
         return response()->json([
             'message' => 'Inventory request status updated successfully.',
             'request' => $inventoryRequest->load(['user', 'role', 'approvedBy'])

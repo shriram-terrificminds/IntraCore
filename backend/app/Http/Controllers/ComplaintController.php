@@ -43,6 +43,16 @@ class ComplaintController extends Controller
                 ]);
             }
         }
+        // Notify all users of the assigned role
+        $roleUsers = \App\Models\User::where('role_id', $complaint->role_id)->get();
+        foreach ($roleUsers as $roleUser) {
+            $roleUser->notify(new \App\Notifications\RoleComplaintOrRequestRaised(
+                'complaint',
+                $complaint->title,
+                Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                $roleUser->role->name
+            ));
+        }
 
         return response()->json([
             'message' => 'Complaint submitted successfully.',
@@ -148,7 +158,7 @@ class ComplaintController extends Controller
             ])],
         ]);
 
-        $currentStatus = $complaint->resolution_status;
+        $currentStatus = $complaint->resolution_status->value;
         $newStatus = $request->resolution_status;
 
         // Enforce status transition rules
@@ -157,6 +167,7 @@ class ComplaintController extends Controller
                 return response()->json(['message' => 'Pending complaints can only be moved to In-progress.'], 400);
             }
         } elseif ($currentStatus === ComplaintStatusEnum::IN_PROGRESS->value) {
+
             if (!in_array($newStatus, [ComplaintStatusEnum::RESOLVED->value, ComplaintStatusEnum::REJECTED->value])) {
                 return response()->json(['message' => 'In-progress complaints can only be moved to Resolved or Rejected.'], 400);
             }
@@ -187,6 +198,14 @@ class ComplaintController extends Controller
 
         $complaint->update($updateData);
 
+        // Notify complaint creator about status update
+        $complaintCreator = $complaint->user;
+        $complaintCreator->notify(new \App\Notifications\StatusUpdatedNotification(
+            'complaint',
+            $complaint->title,
+            $newStatus,
+            Auth::user()->first_name . ' ' . Auth::user()->last_name
+        ));
         return response()->json([
             'message' => 'Complaint status updated successfully.',
             'complaint' => $complaint->load(['user', 'role', 'resolvedBy', 'images'])
