@@ -11,6 +11,7 @@ import { User } from '../../types'; // Import User to get UserRole
 interface ComplaintCardProps {
   complaint: {
     id: number;
+    complaint_number?: string; // <-- Add this
     title: string;
     description: string;
     role: { name: string };
@@ -95,7 +96,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
   const getStatusUpdateOptions = () => {
     switch (complaint.resolution_status) {
       case 'Pending':
-        return ['In-progress', 'Resolved', 'Rejected'];
+        return ['In-progress'];
       case 'In-progress':
         return ['Resolved', 'Rejected'];
       default:
@@ -107,31 +108,75 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     <>
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-semibold text-lg">{complaint.title}</h3>
-                <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
-                  {getStatusIcon(complaint.resolution_status)}
-                  <span className="ml-1">{complaint.resolution_status}</span>
-                </Badge>
-                <Badge variant="outline">{complaint.role.name}</Badge>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
-            </div>
-
-            {canUpdateStatus && getStatusUpdateOptions().length > 0 && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setShowStatusDialog(true)}
-              >
-                Update Status
-              </Button>
+          <div className="flex items-center gap-4 mb-2">
+            {complaint.complaint_number && (
+              <span className="font-bold text-black text-lg">
+                #{complaint.complaint_number}
+              </span>
             )}
+            <h3 className="font-semibold text-lg mt-0">{complaint.title}</h3>
           </div>
-
+          {/* Restore the status and department badges below the title */}
+          <div className="flex items-center gap-3 mb-2">
+            <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
+              {getStatusIcon(complaint.resolution_status)}
+              <span className="ml-1">{complaint.resolution_status}</span>
+            </Badge>
+          </div>
+          {/* Move the status dropdown below the title and badges */}
+          {canUpdateStatus && (
+            <div className="mb-2">
+              <select
+                value={newStatus}
+                onChange={e => setNewStatus(e.target.value)}
+                className="border rounded px-2 py-1"
+              >
+                <option value="Pending">Pending</option>
+                <option value="In-progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              {/* When status is being changed to Resolved, show the textarea for input in a lavender/purple box */}
+              {canUpdateStatus && newStatus === 'Resolved' && (
+                <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
+                  <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
+                  <div className="flex-1">
+                    <label className="block font-semibold mb-1 text-purple-800">Resolution Note</label>
+                    <textarea
+                      value={resolutionNotes}
+                      onChange={e => setResolutionNotes(e.target.value)}
+                      className="w-full border rounded p-2 text-purple-800 bg-purple-50 border-purple-200"
+                      placeholder="Add resolution note..."
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* After resolution, show the note in a lavender/purple box with old style */}
+          {complaint.resolution_status === 'Resolved' && complaint.resolution_notes && (
+            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
+              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
+              <div className="flex-1 text-purple-800">
+                <strong>Resolution Note:</strong> {complaint.resolution_notes}
+              </div>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
+          {complaint.resolvedBy && (
+            <p className="text-sm text-muted-foreground mb-2">
+              <strong>Resolved By:</strong> {complaint.resolvedBy.name}
+            </p>
+          )}
+          {canUpdateStatus && getStatusUpdateOptions().length > 0 && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowStatusDialog(true)}
+            >
+              Update Status
+            </Button>
+          )}
           {/* Images Preview */}
           {complaint.images && complaint.images.length > 0 && (
             <div className="mb-4">
@@ -158,18 +203,6 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               </div>
             </div>
           )}
-
-          {/* Resolution Notes */}
-          {complaint.resolution_notes && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">Resolution Notes</span>
-              </div>
-              <p className="text-sm text-blue-700">{complaint.resolution_notes}</p>
-            </div>
-          )}
-
           {/* Complaint Details */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-4">
             <div>
