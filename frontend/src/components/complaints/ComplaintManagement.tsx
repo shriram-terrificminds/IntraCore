@@ -116,6 +116,7 @@ const STATUS_OPTIONS = [
 ];
 
 export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
+  const userRoleObj = typeof userRole === 'object' ? userRole : { name: userRole };
   const [showNewComplaint, setShowNewComplaint] = useState(false);
   const [complaints, setComplaints] = useState(mockComplaints);
   const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
@@ -131,7 +132,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     // This will be replaced with actual API call later
     console.log('New complaint:', newComplaint);
     // For now, just add to mock data
-    setComplaints(prev => [...prev, { ...newComplaint, id: prev.length + 1, created_at: new Date().toISOString(), resolution_status: 'Pending', role: { name: userRole }, user: { name: 'Current User' } }]);
+    setComplaints(prev => [...prev, { ...newComplaint, id: prev.length + 1, created_at: new Date().toISOString(), resolution_status: 'Pending', role: { name: userRoleObj.name }, user: { name: 'Current User' } }]);
     setNewComplaintOpen(false);
     toast({
       title: 'Complaint Submitted',
@@ -215,7 +216,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             Track and resolve employee complaints
           </p>
         </div>
-        {(userRole === 'employee' || userRole === 'devops' || userRole === 'hr' || userRole === 'admin') && ( // Corrected 'member' to 'employee'
+        {['employee', 'devops', 'hr', 'admin'].includes(userRoleObj.name) && (
           <Button onClick={() => setNewComplaintOpen(true)}> {/* Changed to setNewComplaintOpen */}
             <Plus className="h-4 w-4 mr-2" />
             New Complaint

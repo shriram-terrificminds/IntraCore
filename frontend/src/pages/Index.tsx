@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Index = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userRole, setUserRole] = useState<any>(user?.role?.name.toLowerCase()); // Initialize with user's role
+  const [userRole, setUserRole] = useState<any>(user?.role?.name ? { name: user.role.name.toLowerCase() } : { name: 'admin' }); // Always object
 
   const renderContent = () => {
     switch (activeTab) {
