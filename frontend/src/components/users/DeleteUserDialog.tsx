@@ -1,25 +1,12 @@
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  location: string;
-  joinedDate: string;
-  role: UserRole;
-  profileImage?: string;
-  joinedDate: string;
-  lastEditedBy: string;
-  lastEditedTime: string;
-}
+import type { User, UserRole, UserLocation } from '@/types';
 
 interface DeleteUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User | null;
+  user: Partial<User> | null;
   onDeleteUser: () => void;
 }
 
@@ -30,8 +17,7 @@ export function DeleteUserDialog({ open, onOpenChange, user, onDeleteUser }: Del
   };
 
   if (!user) return null;
-
-  const fullName = `${user.firstName} ${user.lastName}`;
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
