@@ -44,4 +44,4 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('users')->group(function ()
 });
 
 // Update OneSignal player_id for the authenticated user
-Route::middleware('auth:sanctum')->post('/users/player-id', [\App\Http\Controllers\UserController::class, 'updatePlayerId']);
+Route::middleware('auth:sanctum')->post('/users/player-id', [\App\Http\Controllers\UserManagementController::class, 'updatePlayerId']);
