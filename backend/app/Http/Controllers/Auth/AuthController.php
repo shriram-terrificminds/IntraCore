@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Berkayk\OneSignal\OneSignalFacade as OneSignal;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,9 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRules;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @SuppressWarnings("CouplingBetweenObjects")
+ */
 class AuthController extends Controller
 {
     public function login(Request $request): JsonResponse
@@ -36,6 +40,14 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Send test notification on login
+        if ($user->player_id) {
+            OneSignal::sendNotificationToUser(
+                'Welcome! You have successfully logged in.',
+                '7a20042e-269c-4da0-960e-fa46e39e3e2d'
+            );
+        }
+
         return response()->json([
             'user' => $user,
             'token' => $token,
@@ -44,7 +56,16 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user?->currentAccessToken()?->delete();
+
+        // Send test notification on logout
+        if ($user && $user->player_id) {
+            OneSignal::sendNotificationToUser(
+                'You have successfully logged out.',
+                '7a20042e-269c-4da0-960e-fa46e39e3e2d'
+            );
+        }
 
         return response()->json(['message' => 'Successfully logged out']);
     }
