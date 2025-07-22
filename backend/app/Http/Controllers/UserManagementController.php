@@ -38,13 +38,7 @@ class UserManagementController extends Controller
         }
 
         $users = $query->paginate($request->input('per_page', 15));
-        return response()->json($users);
-    }
-
-    // Advanced search (optional)
-    public function list(Request $request)
-    {
-        return $this->index($request);
+        return response()->json($users->load('role', 'location'));
     }
 
     // Get user details
@@ -75,28 +69,21 @@ class UserManagementController extends Controller
         return response()->json($user, 201);
     }
 
-    // Update user (with profile image)
+    // Update user (with profile image) via POST
     public function update(Request $request, $id)
     {
         $user = User::withTrashed()->findOrFail($id);
         $validated = $request->validate([
-            'first_name' => 'sometimes|required|string|max:50',
-            'last_name' => 'sometimes|required|string|max:50',
-            'email' => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8',
-            'role_id' => ['sometimes', 'required', Rule::exists('roles', 'id')],
-            'location_id' => ['sometimes', 'required', Rule::exists('locations', 'id')],
-            'profile_image' => 'nullable|image|max:2048',
-        ]);
+            'first_name' => 'sometimes|string|max:50',
+            'last_name' => 'sometimes|string|max:50',
+            'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
+            'password' => 'sometimes|nullable|string|min:8',
+            'role_id' => ['sometimes', Rule::exists('roles', 'id')],
+            'location_id' => ['sometimes', Rule::exists('locations', 'id')],
+        ]); 
         $user->fill($validated);
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
-        }
-        if ($request->hasFile('profile_image')) {
-            if ($user->profile_image) {
-                Storage::disk('public')->delete($user->profile_image);
-            }
-            $user->profile_image = $request->file('profile_image')->store('profile_images', 'public');
         }
         $user->save();
         return response()->json($user);

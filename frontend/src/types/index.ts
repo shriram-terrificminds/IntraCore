@@ -1,12 +1,40 @@
+export interface UserRole {
+  id: number;
+  name: 'Admin' | 'Devops' | 'Hr' | 'Employee';
+}
+
+export interface UserLocation {
+  id: number;
+  name: 'Kochi' | 'Trivandrum' | 'Bangalore' | 'Perth';
+}
+
+// Static arrays for roles and locations
+export const USER_ROLES: UserRole[] = [
+  { id: 1, name: 'Admin' },
+  { id: 2, name: 'Devops' },
+  { id: 3, name: 'Hr' },
+  { id: 4, name: 'Employee' },
+];
+
+export const USER_LOCATIONS: UserLocation[] = [
+  { id: 1, name: 'Kochi' },
+  { id: 2, name: 'Trivandrum' },
+  { id: 3, name: 'Bangalore' },
+  { id: 4, name: 'Perth' },
+];
+
 export interface User {
   id: number;
   first_name: string;
   last_name: string;
   email: string;
-  role: 'admin' | 'devops' | 'hr' | 'employee';
-  location: string;
+  role: UserRole;
+  location: UserLocation;
+  profile_image?: string | null;
+  player_id?: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface InventoryRequest {

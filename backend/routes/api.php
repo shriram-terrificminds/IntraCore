@@ -32,8 +32,8 @@ Route::middleware('auth:sanctum')->prefix('complaints')->group(function () {
     Route::patch('/{complaint}/status', [ComplaintController::class, 'updateStatus']);
 });
 
-// User Management (Admin only)
-Route::middleware(['auth:sanctum', 'admin'])->prefix('users')->group(function () {
+// User Management
+Route::middleware(['auth:sanctum', 'check.admin'])->prefix('users')->group(function () {
     Route::get('/', [UserManagementController::class, 'index']); // List users
     Route::get('/{id}', [UserManagementController::class, 'show']); // Get user details
     Route::post('/', [UserManagementController::class, 'store']); // Create user
