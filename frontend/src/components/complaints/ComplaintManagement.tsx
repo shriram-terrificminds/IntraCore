@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../../services/api'; // Add this import at the top
 import { Plus, Search, Filter, SortDesc } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,88 +18,26 @@ import { NewComplaintDialog } from './NewComplaintDialog';
 import { ComplaintCard } from './ComplaintCard';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '../../types'; // Import User to get UserRole
+import { Complaint } from '@/types/Complaint';
 
+// Set axios base URL and ensure credentials are sent for Sanctum
+// axios.defaults.baseURL = 'http://localhost:8000';
+// axios.defaults.withCredentials = true;
+
+// Set up axios interceptor to always add Authorization header if token exists
+// axios.interceptors.request.use((config) => {
+//   const token = localStorage.getItem('auth_token');
+//   if (token) {
+//     config.headers = Object.assign({}, config.headers);
+//     config.headers['Authorization'] = `Bearer ${token}`;
+//   }
+//   return config;
+// });
+
+// Remove any local interface Complaint definition in this file. Only use the imported Complaint type from '@/types/Complaint'.
 interface ComplaintManagementProps {
   userRole: User['role']; // Corrected type for userRole
 }
-
-// Mock data for demonstration
-const mockComplaints = [
-  {
-    id: 1,
-    title: 'Coffee machine not working',
-    description: 'The coffee machine in the main pantry is not dispensing coffee properly. It makes a grinding noise but no coffee comes out.',
-    role: { name: 'Admin' },
-    resolution_status: 'Pending',
-    resolution_notes: null,
-    created_at: '2024-01-15T10:30:00Z',
-    resolved_at: null,
-    user: { name: 'John Doe' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/coffee-machine-1.jpg' },
-      { image_url: 'complaints/coffee-machine-2.jpg' }
-    ]
-  },
-  {
-    id: 2,
-    title: 'WiFi connectivity issues',
-    description: 'Frequent disconnections and slow internet speed in the conference room. Affecting video calls and presentations.',
-    role: { name: 'DevOps' },
-    resolution_status: 'In-progress',
-    resolution_notes: 'Investigating network configuration. Will check router settings and signal strength.',
-    created_at: '2024-01-14T14:20:00Z',
-    resolved_at: null,
-    user: { name: 'Sarah Smith' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/wifi-issue.jpg' }
-    ]
-  },
-  {
-    id: 3,
-    title: 'Air conditioning too cold',
-    description: 'The AC in the open workspace is set too cold, making it uncomfortable for employees. Temperature needs adjustment.',
-    role: { name: 'Admin' },
-    resolution_status: 'Resolved',
-    resolution_notes: 'Temperature adjusted from 18°C to 22°C. All employees notified of the change.',
-    created_at: '2024-01-13T09:15:00Z',
-    resolved_at: '2024-01-15T16:45:00Z',
-    user: { name: 'Mike Johnson' },
-    resolvedBy: { name: 'Admin Team' },
-    images: []
-  },
-  {
-    id: 4,
-    title: 'Printer paper jam',
-    description: 'The main office printer has a paper jam that needs to be cleared. Affecting document printing for the entire floor.',
-    role: { name: 'Admin' },
-    resolution_status: 'Rejected',
-    resolution_notes: 'Issue resolved by user after following troubleshooting guide. No further action needed.',
-    created_at: '2024-01-12T11:00:00Z',
-    resolved_at: '2024-01-12T11:30:00Z',
-    user: { name: 'Lisa Chen' },
-    resolvedBy: { name: 'Admin Team' },
-    images: [
-      { image_url: 'complaints/printer-jam.jpg' }
-    ]
-  },
-  {
-    id: 5,
-    title: 'Broken office chair',
-    description: 'Office chair in cubicle A3 has a broken wheel and won\'t roll properly. Needs replacement or repair.',
-    role: { name: 'HR' },
-    resolution_status: 'Pending',
-    resolution_notes: null,
-    created_at: '2024-01-16T08:45:00Z',
-    resolved_at: null,
-    user: { name: 'David Wilson' },
-    resolvedBy: null,
-    images: [
-      { image_url: 'complaints/broken-chair.jpg' }
-    ]
-  }
-];
 
 const ROLES = [
   { id: 1, name: 'Admin' },
@@ -115,10 +54,18 @@ const STATUS_OPTIONS = [
   { value: 'Rejected', label: 'Rejected' },
 ];
 
+// Helper to get token from localStorage (or wherever you store it after login)
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const [showNewComplaint, setShowNewComplaint] = useState(false);
-  const [complaints, setComplaints] = useState(mockComplaints);
-  const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filteredComplaints, setFilteredComplaints] = useState(complaints);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -126,18 +73,28 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const { toast } = useToast();
 
   const [newComplaintOpen, setNewComplaintOpen] = useState(false); // Initialize state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const handleNewComplaint = (newComplaint: any) => { // Placeholder function
-    // This will be replaced with actual API call later
-    console.log('New complaint:', newComplaint);
-    // For now, just add to mock data
-    setComplaints(prev => [...prev, { ...newComplaint, id: prev.length + 1, created_at: new Date().toISOString(), resolution_status: 'Pending', role: { name: userRole }, user: { name: 'Current User' } }]);
-    setNewComplaintOpen(false);
-    toast({
-      title: 'Complaint Submitted',
-      description: 'Your complaint has been successfully submitted.',
-    });
-  };
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await api.post('/complaints/list', {});
+        setComplaints(response.data.data || []);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError('Failed to fetch complaints: ' + err.message);
+        } else {
+          setError('Failed to fetch complaints');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchComplaints();
+  }, []);
 
   // Filter and search complaints
   useEffect(() => {
@@ -150,7 +107,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
 
     // Filter by role
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(complaint => complaint.role.name === roleFilter);
+      filtered = filtered.filter(complaint => complaint.role?.name === roleFilter);
     }
 
     // Search by title or complaint number
@@ -158,7 +115,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(complaint => 
         complaint.title.toLowerCase().includes(search) ||
-        complaint.id.toString().includes(search)
+        (complaint.complaint_number && complaint.complaint_number.toLowerCase().includes(search))
       );
     }
 
@@ -174,6 +131,37 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
 
     setFilteredComplaints(filtered);
   }, [complaints, searchTerm, statusFilter, roleFilter, sortBy]);
+
+  // Remove frontend-only filtering for status and role
+  // Add useEffect to fetch complaints from backend when filters change
+  useEffect(() => {
+    const fetchFilteredComplaints = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const filters: Record<string, string | number> = { page };
+        if (statusFilter !== 'all') filters.resolution_status = statusFilter;
+        if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+        const response = await api.post('/complaints/list', filters);
+        let complaintsData = response.data.data || [];
+        setTotalPages(response.data.last_page || 1);
+        // Fallback: If backend returns all data for 'Pending', filter on frontend
+        if (statusFilter !== 'all' && response.data.data && response.data.data.length && !response.data.data[0].resolution_status) {
+          complaintsData = complaintsData.filter((c: any) => c.resolution_status === statusFilter);
+        }
+        setComplaints(complaintsData);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError('Failed to fetch complaints: ' + err.message);
+        } else {
+          setError('Failed to fetch complaints');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFilteredComplaints();
+  }, [statusFilter, roleFilter, page]);
 
   const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
     // Simulate API call
@@ -204,6 +192,36 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   };
 
   const stats = getStats();
+
+  const handleNewComplaint = async (newComplaint: Complaint) => {
+    setLoading(true);
+    try {
+      await api.post('/complaints', newComplaint);
+      // Refresh complaints list
+      const response = await api.post('/complaints/list', {});
+      setComplaints(response.data.data || []);
+      setNewComplaintOpen(false);
+      toast({
+        title: 'Complaint Submitted',
+        description: 'Your complaint has been successfully submitted.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Submission Failed',
+        description: 'Failed to submit complaint. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading complaints...</div>;
+  }
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -311,12 +329,24 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
           filteredComplaints.map((complaint) => (
             <ComplaintCard
               key={complaint.id}
-              complaint={complaint}
+              complaint={{
+                ...complaint,
+                role: complaint.role || { name: 'Unknown' },
+                resolution_status: complaint.resolution_status || 'Pending',
+                user: complaint.user || { name: 'Unknown' },
+              }}
               userRole={userRole}
               onStatusUpdate={handleStatusUpdate}
             />
           ))
         )}
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex justify-center mt-4 gap-2">
+        <Button size="sm" variant="outline" onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+        <span className="px-2 py-1">Page {page} of {totalPages}</span>
+        <Button size="sm" variant="outline" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
       </div>
 
       {/* New Complaint Dialog */}
