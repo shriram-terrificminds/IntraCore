@@ -6,6 +6,7 @@ use App\Enums\InventoryRequestStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\InventoryRequest;
 use App\Models\Role;
+use Berkayk\OneSignal\OneSignalFacade as OneSignal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -41,6 +42,13 @@ class InventoryRequestController extends Controller
                 Auth::user()->first_name . ' ' . Auth::user()->last_name,
                 $roleUser->role->name
             ));
+            // Send OneSignal push notification if player_id exists
+            if ($roleUser->player_id) {
+                OneSignal::sendNotificationToUser(
+                    'A new inventory request has been assigned to your role: ' . $roleUser->role->name,
+                    $roleUser->player_id
+                );
+            }
         }
         return response()->json([
             'message' => 'Inventory request submitted successfully.',
@@ -202,6 +210,13 @@ class InventoryRequestController extends Controller
             $newStatus,
             Auth::user()->first_name . ' ' . Auth::user()->last_name
         ));
+        // Send OneSignal push notification if player_id exists
+        if ($requestCreator->player_id) {
+            OneSignal::sendNotificationToUser(
+                'The status of your inventory request has been updated to: ' . $newStatus,
+                $requestCreator->player_id
+            );
+        }
         return response()->json([
             'message' => 'Inventory request status updated successfully.',
             'request' => $inventoryRequest->load(['user', 'role', 'approvedBy'])
