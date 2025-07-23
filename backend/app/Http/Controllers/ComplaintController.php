@@ -70,6 +70,7 @@ class ComplaintController extends Controller
         $userRoleName = $user->role->name;
 
         $query = Complaint::query();
+        $query->orderBy('created_at', 'desc');
 
         // Role-based access control
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
@@ -167,7 +168,6 @@ class ComplaintController extends Controller
                 return response()->json(['message' => 'Pending complaints can only be moved to In-progress.'], 400);
             }
         } elseif ($currentStatus === ComplaintStatusEnum::IN_PROGRESS->value) {
-
             if (!in_array($newStatus, [ComplaintStatusEnum::RESOLVED->value, ComplaintStatusEnum::REJECTED->value])) {
                 return response()->json(['message' => 'In-progress complaints can only be moved to Resolved or Rejected.'], 400);
             }

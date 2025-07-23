@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class RoleComplaintOrRequestRaised extends Notification
 {
@@ -22,6 +23,9 @@ class RoleComplaintOrRequestRaised extends Notification
         $this->roleName = $roleName;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function via($notifiable)
     {
         return ['mail'];

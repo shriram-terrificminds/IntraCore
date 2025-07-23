@@ -58,7 +58,7 @@ export function AuthPage() {
           </TabsContent>
         </Tabs>
       </div>
-      <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: 'url(/placeholder-background.jpg)' }}></div>
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(/login-background.jpg)' }}></div>
     </div>
   );
 }

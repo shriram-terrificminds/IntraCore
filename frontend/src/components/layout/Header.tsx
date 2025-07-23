@@ -33,19 +33,10 @@ export function Header({}: HeaderProps) {
     <header className="h-16 border-b bg-background flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
         {/* <SidebarTrigger /> */}
-        <div>
-          <h1 className="text-xl font-semibold">IntraCore</h1>
-          <p className="text-sm text-muted-foreground">Inventory & Complaint Management</p>
-        </div>
+        <span className="text-sm text-muted-foreground">Inventory & Complaint Management</span>
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-            3
-          </Badge>
-        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -61,17 +52,25 @@ export function Header({}: HeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.first_name} {user?.last_name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" /> {user?.role.name}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> {user?.location.name}
-                </p>
+              <div className="flex flex-col items-start space-y-2 pb-2 w-full">
+                <Avatar className="h-14 w-14 mx-auto">
+                  <AvatarImage src={user?.profile_image || 'https://randomuser.me/api/portraits/men/1.jpg'} alt={`${user?.first_name} ${user?.last_name}`} />
+                  <AvatarFallback>{user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col space-y-1 w-full">
+                  <p className="text-sm font-medium leading-none">{user?.first_name} {user?.last_name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                      <User className="h-3 w-3" /> {user?.role.name}
+                    </span>
+                    <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {user?.location.name}
+                    </span>
+                  </div>
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
