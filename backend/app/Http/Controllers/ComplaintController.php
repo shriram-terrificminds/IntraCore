@@ -88,9 +88,9 @@ class ComplaintController extends Controller
 
         // Filter by role (by name, case-insensitive)
         if ($request->filled('role') && $request->role !== 'all') {
-            $roleName = strtolower($request->role);
+            $roleName = $request->role;
             $query->whereHas('role', function ($q) use ($roleName) {
-                $q->whereRaw('LOWER(name) = ?', [$roleName]);
+                $q->whereRaw('LOWER(name) = ?', [strtolower($roleName)]);
             });
         }
 
