@@ -184,10 +184,8 @@ export function NewRequestDialog({ open, onOpenChange, onSubmit }: NewRequestDia
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Admin</SelectItem>
                 <SelectItem value="2">HR</SelectItem>
                 <SelectItem value="3">DevOps</SelectItem>
-                <SelectItem value="4">Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>

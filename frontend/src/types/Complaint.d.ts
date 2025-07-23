@@ -5,7 +5,7 @@ export interface Complaint {
   description: string;
   role_id?: number;
   role?: { name: string };
-  resolution_status?: string;
+  resolution_status: 'Pending' | 'In-progress' | 'Resolved' | 'Rejected';
   resolution_notes?: string;
   created_at: string;
   updated_at?: string;

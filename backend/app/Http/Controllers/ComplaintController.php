@@ -78,7 +78,6 @@ class ComplaintController extends Controller
         $userRoleName = $user->role->name;
 
         $query = Complaint::query();
-        $query->orderBy('created_at', 'desc');
 
         // Role-based access control
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
@@ -109,8 +108,7 @@ class ComplaintController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('complaint_number', 'like', "%$search%")
                   ->orWhere('title', 'like', "%$search%")
-                  ->orWhere('description', 'like', "%$search%")
-                  ;
+                  ->orWhere('description', 'like', "%$search%");
             });
         }
 
@@ -141,6 +139,7 @@ class ComplaintController extends Controller
     /**
      * @
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function updateStatus(Request $request, Complaint $complaint)
@@ -182,7 +181,7 @@ class ComplaintController extends Controller
         } else {
             // If the complaint is already in a final state, prevent further updates
             if (in_array($currentStatus, [ComplaintStatusEnum::RESOLVED->value, ComplaintStatusEnum::REJECTED->value])) {
-                 return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' complaint.'], 400);
+                return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' complaint.'], 400);
             }
             // Add a generic error for any other unexpected status transition
             return response()->json(['message' => 'Invalid status transition.'], 400);

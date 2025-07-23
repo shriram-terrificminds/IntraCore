@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -17,14 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Search,
-  Download,
-  PlusCircle,
-  CheckCircle2,
-  XCircle,
-  Package,
-} from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -40,19 +29,29 @@ import {
   updateInventoryRequestStatus,
 } from '@/services/api';
 
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 interface InventoryRequestsProps {
   userRole: { name: string } | string;
 }
 
 interface InventoryRequest {
   id: number;
-  request_number: string;
+  request_number: number;
   title: string;
   description: string;
-  status: 'Pending' | 'Approved' | 'Delivered' | 'Shipped' | 'Received' | 'Rejected';
+  status: 'Pending' | 'Approved' | 'Shipped' | 'Received' | 'Rejected';
   created_at: string;
   approved_at?: string;
-  user?: { id: number; name: string };
+  user: { name?: string; first_name?: string; last_name?: string };
   role?: { id: number; name: string };
 }
 
@@ -73,45 +72,34 @@ const STATUS_OPTIONS = [
 export function InventoryRequests({ userRole }: InventoryRequestsProps) {
   const userRoleObj = typeof userRole === 'object' ? userRole : { name: userRole };
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchTerm = useDebounce(searchQuery, 700);
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [sortOrder, setSortOrder] = useState('desc');
   const [requests, setRequests] = useState<InventoryRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(10);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (userRoleObj.name === 'admin') {
-      setRoles([
-        { id: 1, name: 'Admin' },
-        { id: 2, name: 'HR' },
-        { id: 3, name: 'DevOps' },
-        { id: 4, name: 'Employee' },
-      ]);
-    }
-  }, [userRoleObj.name]);
-
-  useEffect(() => {
-    fetchRequests();
-  }, [statusFilter, searchQuery, roleFilter, page]);
-
-  const fetchRequests = async () => {
+    const fetchRequests = async () => {
     setLoading(true);
     setError(null);
     try {
       const params: any = { page };
       if (statusFilter !== 'all') params.status = statusFilter;
-      if (searchQuery) params.search = searchQuery;
-      if (userRoleObj.name === 'admin' && roleFilter !== 'all') {
-        params.role_id = Number(roleFilter);
-      }
+      if (roleFilter !== 'all') params.role = roleFilter.toLowerCase();
+      params.sort_by = 'created_at';
+      params.sort_order = sortOrder;
+      if (debouncedSearchTerm.trim()) params.search = debouncedSearchTerm.trim();
       const data = await getInventoryRequests(params);
       setRequests(data.data || []);
       setTotalPages(data.last_page || 1);
+      setTotalRecords(data.total || 10);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch inventory requests.');
@@ -119,36 +107,58 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
       setLoading(false);
     }
   };
+    fetchRequests();
+  }, [statusFilter, debouncedSearchTerm, roleFilter, page, sortOrder]);
 
   const handleNewRequest = async (title: string, description: string, role_id: number) => {
     try {
       await createInventoryRequest({ title, description, role_id });
+      const params: any = { page };
+      if (statusFilter !== 'all') params.status = statusFilter;
+      if (roleFilter !== 'all') params.role = roleFilter.toLowerCase();
+      params.sort_by = 'created_at';
+      params.sort_order = sortOrder;
+      if (debouncedSearchTerm.trim()) params.search = debouncedSearchTerm.trim();
+      if (userRoleObj.name === 'admin' && roleFilter !== 'all') {
+        params.role_id = Number(roleFilter);
+      }
+      const data = await getInventoryRequests(params);
+      setRequests(data.data || []);
       toast({
         title: 'Request Submitted',
         description: 'Your inventory request has been submitted successfully.',
       });
-      fetchRequests(); // Re-fetch the list to get the full, hydrated object
     } catch (err) {
       toast({
         title: 'Error',
-        description: 'Failed to submit request.',
+        description: err.response.data.message,
         variant: 'destructive',
       });
     }
   };
 
-  const handleUpdateStatus = async (id: number, newStatus: InventoryRequest['status']) => {
+  const handleUpdateStatus = async (id: number, request_number: number, newStatus: InventoryRequest['status']) => {
     try {
       await updateInventoryRequestStatus(id, newStatus);
+      const params: any = { page };
+      if (statusFilter !== 'all') params.status = statusFilter;
+      if (roleFilter !== 'all') params.role = roleFilter.toLowerCase();
+      params.sort_by = 'created_at';
+      params.sort_order = sortOrder;
+      if (debouncedSearchTerm.trim()) params.search = debouncedSearchTerm.trim();
+      if (userRoleObj.name === 'admin' && roleFilter !== 'all') {
+        params.role_id = Number(roleFilter);
+      }
+      const data = await getInventoryRequests(params);
+      setRequests(data.data || []);
       toast({
         title: 'Status Updated',
-        description: `Request ${id} updated to ${newStatus}`,
+        description: `Request ${request_number} updated to ${newStatus}`,
       });
-      fetchRequests();
     } catch (err) {
       toast({
         title: 'Error',
-        description: 'Failed to update status.',
+        description: err.response.data.message,
         variant: 'destructive',
       });
     }
@@ -173,12 +183,10 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
           <h1 className="text-3xl font-bold tracking-tight">Inventory Requests</h1>
           <p className="text-muted-foreground">Manage and track all inventory requests</p>
         </div>
-        {['admin', 'devops', 'hr'].includes(userRoleObj.name) && (
-          <Button onClick={() => setNewRequestOpen(true)} className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
+        <Button onClick={() => setNewRequestOpen(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4 mr-2" />
             New Request
-          </Button>
-        )}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -186,7 +194,7 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by request number or title..."
+            placeholder="Search by request number or title or description"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-4"
@@ -194,7 +202,7 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
         </div>
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
@@ -203,32 +211,45 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
               ))}
             </SelectContent>
           </Select>
-          {userRoleObj.name === 'admin' && (
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {roles.map(role => (
-                  <SelectItem key={role.id} value={role.id.toString()}>{role.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem key="2" value="Hr">Hr</SelectItem>
+              <SelectItem key="3" value="Devops">Devops</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Latest First</SelectItem>
+              <SelectItem value="asc">Oldest First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {totalRecords} requests
+        </p>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {statusFilter !== 'all' && `Status: ${statusFilter}`}
+            {roleFilter !== 'all' && ` • Role: ${roleFilter}`}
+            {searchQuery && ` • Search: "${searchQuery}"`}
+          </span>
         </div>
       </div>
 
       {/* Request Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Requests</CardTitle>
-          <CardDescription>Overview of all inventory requests.</CardDescription>
-        </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-muted-foreground text-center py-6">Loading...</p>
@@ -244,10 +265,9 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Requestor</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Approved</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Created on</TableHead>
+                    <TableHead>Approved on</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -271,12 +291,6 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                         case 'Approved':
                           statusOptions = [
                             { value: 'Approved', label: 'Approved' },
-                            { value: 'Delivered', label: 'Delivered' },
-                          ];
-                          break;
-                        case 'Delivered':
-                          statusOptions = [
-                            { value: 'Delivered', label: 'Delivered' },
                             { value: 'Shipped', label: 'Shipped' },
                           ];
                           break;
@@ -304,7 +318,7 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                             <Select
                               value={request.status}
                               onValueChange={val => {
-                                if (val !== request.status) handleUpdateStatus(request.id, val as InventoryRequest['status']);
+                                if (val !== request.status) handleUpdateStatus(request.id, request.request_number, val as InventoryRequest['status']);
                               }}
                               disabled={disabled}
                             >
@@ -321,34 +335,20 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>{request.user?.name || '-'}</TableCell>
+                          <TableCell>{request.user.first_name && request.user.last_name ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</TableCell>
                           <TableCell>{request.role?.name || '-'}</TableCell>
                           <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>{request.approved_at ? new Date(request.approved_at).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell className="text-right">
-                            {['admin', 'devops'].includes(userRoleObj.name) ? (
-                              <div className="flex justify-end gap-2">
-                                {/* Remove old status buttons, as status is now handled by dropdown */}
-                                <Button variant="ghost" size="icon">
-                                  <Package className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button variant="ghost" size="icon">
-                                <Package className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </TableCell>
                         </TableRow>
                       );
                     })
                   )}
                 </TableBody>
               </Table>
-              <div className="flex justify-end mt-4 gap-2">
-                <Button variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
-                <span className="px-2 py-1 text-sm">Page {page} of {totalPages}</span>
-                <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+              <div className="flex justify-center mt-4 gap-2">
+                <Button size="sm" variant="outline" onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+                <span className="px-2 py-1">Page {page} of {totalPages}</span>
+                <Button size="sm" variant="outline" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
               </div>
             </>
           )}
