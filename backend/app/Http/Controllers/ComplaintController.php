@@ -70,6 +70,7 @@ class ComplaintController extends Controller
         $userRoleName = $user->role->name;
 
         $query = Complaint::query();
+        $query->orderBy('created_at', 'desc');
 
         // Role-based access control
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
