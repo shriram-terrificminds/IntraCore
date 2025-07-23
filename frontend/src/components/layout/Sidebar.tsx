@@ -41,24 +41,24 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
     switch (currentUserRole) {
       case "admin":
-        roleSpecificItems.push(
-          { id: "users", label: "Users", icon: UserIcon },
-          { id: "announcements", label: "Announcements", icon: Settings },
-          { id: "reports", label: "Reports", icon: BarChart3 }
-        );
+      roleSpecificItems.push(
+        { id: "users", label: "Users", icon: UserIcon },
+        { id: "announcements", label: "Announcements", icon: Settings },
+        { id: "reports", label: "Reports", icon: BarChart3 }
+      );
         break;
       case "devops":
       case "hr":
-        roleSpecificItems.push(
-          { id: "announcements", label: "Announcements", icon: Settings },
+      roleSpecificItems.push(
+        { id: "announcements", label: "Announcements", icon: Settings },
           { id: "reports", label: "Reports", icon: BarChart3 } // HR/Devops can see reports in your requirement analysis, so keeping this
-        );
+      );
         break;
       case "employee":
         // Employees only see announcements from the list
-        roleSpecificItems.push(
-          { id: "announcements", label: "Announcements", icon: Settings }
-        );
+      roleSpecificItems.push(
+        { id: "announcements", label: "Announcements", icon: Settings }
+      );
         break;
       default:
         break;

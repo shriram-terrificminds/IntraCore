@@ -8,37 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  location: string;
-  joinedDate: string;
-  role: UserRole;
-  profileImage?: string;
-  joinedDate: string;
-  lastEditedBy: string;
-  lastEditedTime: string;
-}
+import type { User, UserRole, UserLocation } from '@/types';
 
 interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User | null;
+  user: Partial<User> | null;
   onEditUser: (userData: Partial<User>) => void;
 }
 
 export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUserDialogProps) {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+  const [formData, setFormData] = useState<Partial<User>>({
+    first_name: '',
+    last_name: '',
     email: '',
-    location: '',
-    role: '' as UserRole,
-    profileImage: '',
-    password: ''
+    location: undefined,
+    role: undefined,
+    profile_image: '',
+    password: '',
   });
   
   const { toast } = useToast();
@@ -46,13 +33,13 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
         email: user.email || '',
-        location: user.location || '',
-        role: user.role || 4,
-        profileImage: user.profileImage || '',
-        password: ''
+        location: user.location || undefined,
+        role: user.role || undefined,
+        profile_image: user.profile_image || '',
+        password: '',
       });
     }
   }, [user]);
@@ -60,7 +47,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.location) {
+    if (!formData.first_name || !formData.last_name || !formData.email || !formData.location) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -70,12 +57,12 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
     }
 
     const updateData: Partial<User> = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+      firstName: formData.first_name,
+      lastName: formData.last_name,
       email: formData.email,
       location: formData.location,
       role: formData.role,
-      profileImage: formData.profileImage
+      profileImage: formData.profile_image
     };
 
     // Only include password if it's provided
@@ -103,8 +90,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
   // Helper function to get avatar initials safely
   const getAvatarInitials = () => {
-    const firstName = formData.firstName || '';
-    const lastName = formData.lastName || '';
+    const firstName = formData.first_name || '';
+    const lastName = formData.last_name || '';
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
@@ -127,7 +114,7 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
           {/* Profile Image */}
           <div className="flex flex-col items-center gap-3">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={formData.profileImage} alt="Profile" />
+              <AvatarImage src={formData.profile_image} alt="Profile" />
               <AvatarFallback>
                 {getAvatarInitials()}
               </AvatarFallback>
@@ -154,8 +141,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
               <Label htmlFor="editFirstName">First Name *</Label>
               <Input
                 id="editFirstName"
-                value={formData.firstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                value={formData.first_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
                 placeholder="Enter first name"
                 required
               />
@@ -164,8 +151,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
               <Label htmlFor="editLastName">Last Name *</Label>
               <Input
                 id="editLastName"
-                value={formData.lastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                value={formData.last_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
                 placeholder="Enter last name"
                 required
               />
@@ -186,16 +173,22 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
           <div className="space-y-2">
             <Label htmlFor="editRole">Role *</Label>
-            <Select value={formData.role} onValueChange={(value: UserRole) => 
-              setFormData(prev => ({ ...prev, role: value }))
-            }>
+            <Select value={formData.role?.id?.toString() || ''} onValueChange={(value) => {
+              const roleObj = [
+                { id: 1, name: 'Admin' },
+                { id: 2, name: 'Hr' },
+                { id: 3, name: 'Devops' },
+                { id: 4, name: 'Employee' },
+              ].find(r => r.id.toString() === value);
+              setFormData(prev => ({ ...prev, role: roleObj }));
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">Admin</SelectItem>
-                <SelectItem value="2">HR</SelectItem>
-                <SelectItem value="3">DevOps</SelectItem>
+                <SelectItem value="2">Hr</SelectItem>
+                <SelectItem value="3">Devops</SelectItem>
                 <SelectItem value="4">Employee</SelectItem>
               </SelectContent>
             </Select>
@@ -203,16 +196,23 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
 
           <div className="space-y-2">
             <Label htmlFor="editLocation">Location *</Label>
-            <Select value={formData.location} onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, location: value }))
-            }>
+            <Select value={formData.location?.id?.toString() || ''} onValueChange={(value) => {
+              const locationObj = [
+                { id: 1, name: 'Kochi' },
+                { id: 2, name: 'Trivandrum' },
+                { id: 3, name: 'Bangalore' },
+                { id: 4, name: 'Perth' },
+              ].find(l => l.id.toString() === value);
+              setFormData(prev => ({ ...prev, location: locationObj }));
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select office location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="TVM">TVM</SelectItem>
-                <SelectItem value="Ernakulam">Ernakulam</SelectItem>
-                <SelectItem value="Bangalore">Bangalore</SelectItem>
+                <SelectItem value="1">Kochi</SelectItem>
+                <SelectItem value="2">Trivandrum</SelectItem>
+                <SelectItem value="3">Bangalore</SelectItem>
+                <SelectItem value="4">Perth</SelectItem>
               </SelectContent>
             </Select>
           </div>

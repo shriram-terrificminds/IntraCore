@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role_id',
         'location_id',
         'profile_image',
+        'player_id',
     ];
 
     protected $hidden = [

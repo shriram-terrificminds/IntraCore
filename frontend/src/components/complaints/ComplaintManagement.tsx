@@ -41,8 +41,8 @@ interface ComplaintManagementProps {
 
 const ROLES = [
   { id: 1, name: 'Admin' },
-  { id: 2, name: 'HR' },
-  { id: 3, name: 'DevOps' },
+  { id: 2, name: 'Hr' },
+  { id: 3, name: 'Devops' },
   { id: 4, name: 'Employee' },
 ];
 
@@ -53,12 +53,6 @@ const STATUS_OPTIONS = [
   { value: 'Resolved', label: 'Resolved' },
   { value: 'Rejected', label: 'Rejected' },
 ];
-
-// Helper to get token from localStorage (or wherever you store it after login)
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   console.log('ComplaintManagement userRole:', userRole);
@@ -236,7 +230,9 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             Track and resolve employee complaints
           </p>
         </div>
+ feature/complaint_api_integration
         <Button onClick={() => setNewComplaintOpen(true)}>
+
           <Plus className="h-4 w-4 mr-2" />
           New Complaint
         </Button>

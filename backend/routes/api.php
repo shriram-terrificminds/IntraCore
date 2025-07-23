@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryRequestController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/dashboard/stats', [DashboardController::class, 'stats']);
@@ -30,3 +31,17 @@ Route::middleware('auth:sanctum')->prefix('complaints')->group(function () {
     Route::get('/{complaint}', [ComplaintController::class, 'show']);
     Route::patch('/{complaint}/status', [ComplaintController::class, 'updateStatus']);
 });
+
+// User Management
+Route::middleware(['auth:sanctum', 'check.admin'])->prefix('users')->group(function () {
+    Route::get('/', [UserManagementController::class, 'index']); // List users
+    Route::get('/{id}', [UserManagementController::class, 'show']); // Get user details
+    Route::post('/', [UserManagementController::class, 'store']); // Create user
+    Route::post('/list', [UserManagementController::class, 'list']); // Advanced search (optional)
+    Route::match(['put', 'patch'], '/{id}', [UserManagementController::class, 'update']); // Update user
+    Route::delete('/{id}', [UserManagementController::class, 'destroy']); // Delete user
+    Route::post('/{id}/restore', [UserManagementController::class, 'restore']); // Restore user
+});
+
+// Update OneSignal player_id for the authenticated user
+Route::middleware('auth:sanctum')->post('/users/player-id', [\App\Http\Controllers\UserManagementController::class, 'updatePlayerId']);

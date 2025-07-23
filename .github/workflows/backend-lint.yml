@@ -5,12 +5,10 @@ on:
     branches:
       - development
       - production
-      - test-pipeline
   pull_request:
     branches:
       - development
       - production
-      - test-pipeline
 
 jobs:
   lint:
