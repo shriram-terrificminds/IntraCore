@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import api from '../../services/api'; // Add this import at the top
 import { Plus, Search, Filter, SortDesc } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +20,16 @@ import { ComplaintCard } from './ComplaintCard';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '../../types'; // Import User to get UserRole
 import { Complaint } from '@/types/Complaint';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 // Set axios base URL and ensure credentials are sent for Sanctum
 // axios.defaults.baseURL = 'http://localhost:8000';
@@ -62,6 +73,9 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const [error, setError] = useState<string | null>(null);
   const [filteredComplaints, setFilteredComplaints] = useState(complaints);
   const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchHadFocus, setSearchHadFocus] = useState(false);
+  const debouncedSearchTerm = useDebounce(searchTerm, 700);
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
@@ -91,43 +105,18 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     fetchComplaints();
   }, []);
 
-  // Filter and search complaints
+  // Remove frontend-only search filtering. All search/filtering is now handled by the backend.
+  // The filteredComplaints state is now just the complaints state.
   useEffect(() => {
-    let filtered = [...complaints];
+    setFilteredComplaints(complaints);
+  }, [complaints]);
 
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(complaint => complaint.resolution_status === statusFilter);
+  // Refocus search input if it was focused before rerender
+  useEffect(() => {
+    if (searchHadFocus && searchInputRef.current) {
+      searchInputRef.current.focus();
     }
-
-    // Filter by role
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(complaint =>
-        complaint.role?.name?.toLowerCase() === roleFilter.toLowerCase()
-      );
-    }
-
-    // Search by title or complaint number
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(complaint => 
-        complaint.title.toLowerCase().includes(search) ||
-        (complaint.complaint_number && complaint.complaint_number.toLowerCase().includes(search))
-      );
-    }
-
-    // Sort complaints
-    filtered.sort((a, b) => {
-      if (sortBy === 'latest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      } else if (sortBy === 'oldest') {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      return 0;
-    });
-
-    setFilteredComplaints(filtered);
-  }, [complaints, searchTerm, statusFilter, roleFilter, sortBy]);
+  }, [filteredComplaints]);
 
   // Remove frontend-only filtering for status and role
   // Add useEffect to fetch complaints from backend when filters change
@@ -139,13 +128,10 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
         const filters: Record<string, string | number> = { page };
         if (statusFilter !== 'all') filters.resolution_status = statusFilter;
         if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+        if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
         const response = await api.post('/complaints/list', filters);
-        let complaintsData = response.data.data || [];
+        const complaintsData = response.data.data || [];
         setTotalPages(response.data.last_page || 1);
-        // Fallback: If backend returns all data for 'Pending', filter on frontend
-        if (statusFilter !== 'all' && response.data.data && response.data.data.length && !response.data.data[0].resolution_status) {
-          complaintsData = complaintsData.filter((c: Complaint) => c.resolution_status === statusFilter);
-        }
         setComplaints(complaintsData);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -158,24 +144,31 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       }
     };
     fetchFilteredComplaints();
-  }, [statusFilter, roleFilter, page]);
+  }, [statusFilter, roleFilter, page, debouncedSearchTerm]);
 
   const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setComplaints(prev => prev.map(complaint => {
-      if (complaint.id === complaintId) {
-        return {
-          ...complaint,
-          resolution_status: status,
-          resolution_notes: notes || complaint.resolution_notes,
-          resolved_at: status === 'Resolved' || status === 'Rejected' ? new Date().toISOString() : null,
-          resolvedBy: status === 'Resolved' || status === 'Rejected' ? { name: 'Current User' } : complaint.resolvedBy,
-        };
-      }
-      return complaint;
-    }));
+    setLoading(true);
+    try {
+      await api.patch(`/complaints/${complaintId}/update-status`, {
+        resolution_status: status,
+        resolution_notes: notes,
+      });
+      // Refresh complaints list from backend
+      const filters: Record<string, string | number> = { page };
+      if (statusFilter !== 'all') filters.resolution_status = statusFilter;
+      if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+      if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
+      const response = await api.post('/complaints/list', filters);
+      setComplaints(response.data.data || []);
+    } catch (error) {
+      toast({
+        title: 'Status Update Failed',
+        description: 'Could not update complaint status. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStats = () => {
@@ -193,9 +186,33 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const handleNewComplaint = async (newComplaint: Complaint) => {
     setLoading(true);
     try {
-      await api.post('/complaints', newComplaint);
-      // Refresh complaints list
-      const response = await api.post('/complaints/list', {});
+      const hasFiles = Array.isArray(newComplaint.images) && newComplaint.images.length > 0 && newComplaint.images.some(img => img instanceof File);
+      if (hasFiles) {
+        const formData = new FormData();
+        formData.append('title', newComplaint.title);
+        formData.append('description', newComplaint.description);
+        formData.append('role_id', String(newComplaint.role_id));
+        newComplaint.images.forEach((img) => {
+          if (img instanceof File) {
+            formData.append('images[]', img);
+          }
+        });
+        await api.post('/complaints', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        await api.post('/complaints', {
+          title: newComplaint.title,
+          description: newComplaint.description,
+          role_id: newComplaint.role_id,
+        });
+      }
+      // Refresh complaints list from backend
+      const filters: Record<string, string | number> = { page };
+      if (statusFilter !== 'all') filters.resolution_status = statusFilter;
+      if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+      if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
+      const response = await api.post('/complaints/list', filters);
       setComplaints(response.data.data || []);
       setNewComplaintOpen(false);
       toast({
@@ -248,9 +265,12 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search by title or complaint #"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setSearchHadFocus(true)}
+                onBlur={() => setSearchHadFocus(false)}
                 className="pl-10"
               />
             </div>
@@ -328,8 +348,8 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
               complaint={{
                 ...complaint,
                 role: complaint.role || { name: 'Unknown' },
-                resolution_status: complaint.resolution_status || 'Pending',
                 user: complaint.user || { name: 'Unknown' },
+                resolution_status: complaint.resolution_status || 'Pending',
               }}
               userRole={userRole?.name}
               onStatusUpdate={handleStatusUpdate}
