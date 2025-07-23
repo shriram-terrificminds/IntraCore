@@ -29,8 +29,10 @@ interface NewComplaintDialogProps {
 
 // Define ROLES here as it's used in this component
 const ROLES = [
+  { id: 1, name: 'Admin' },
   { id: 2, name: 'HR' },
   { id: 3, name: 'DevOps' },
+  { id: 4, name: 'Employee' },
 ];
 
 export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplaintDialogProps) {

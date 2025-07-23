@@ -36,7 +36,7 @@ import { Complaint } from '@/types/Complaint';
 
 // Remove any local interface Complaint definition in this file. Only use the imported Complaint type from '@/types/Complaint'.
 interface ComplaintManagementProps {
-  userRole: User['role']; // Corrected type for userRole
+  userRole: { id: string; name: string; description: string } | undefined;
 }
 
 const ROLES = [
@@ -61,6 +61,7 @@ const getAuthHeaders = () => {
 };
 
 export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
+  console.log('ComplaintManagement userRole:', userRole);
   const [showNewComplaint, setShowNewComplaint] = useState(false);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -107,7 +108,9 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
 
     // Filter by role
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(complaint => complaint.role?.name === roleFilter);
+      filtered = filtered.filter(complaint =>
+        complaint.role?.name?.toLowerCase() === roleFilter.toLowerCase()
+      );
     }
 
     // Search by title or complaint number
@@ -147,7 +150,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
         setTotalPages(response.data.last_page || 1);
         // Fallback: If backend returns all data for 'Pending', filter on frontend
         if (statusFilter !== 'all' && response.data.data && response.data.data.length && !response.data.data[0].resolution_status) {
-          complaintsData = complaintsData.filter((c: any) => c.resolution_status === statusFilter);
+          complaintsData = complaintsData.filter((c: Complaint) => c.resolution_status === statusFilter);
         }
         setComplaints(complaintsData);
       } catch (err: unknown) {
@@ -233,12 +236,10 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             Track and resolve employee complaints
           </p>
         </div>
-        {(userRole === 'employee' || userRole === 'devops' || userRole === 'hr' || userRole === 'admin') && ( // Corrected 'member' to 'employee'
-          <Button onClick={() => setNewComplaintOpen(true)}> {/* Changed to setNewComplaintOpen */}
-            <Plus className="h-4 w-4 mr-2" />
-            New Complaint
-          </Button>
-        )}
+        <Button onClick={() => setNewComplaintOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Complaint
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -335,7 +336,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
                 resolution_status: complaint.resolution_status || 'Pending',
                 user: complaint.user || { name: 'Unknown' },
               }}
-              userRole={userRole}
+              userRole={userRole?.name}
               onStatusUpdate={handleStatusUpdate}
             />
           ))

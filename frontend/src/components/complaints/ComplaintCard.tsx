@@ -7,11 +7,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '../../types'; // Import User to get UserRole
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ComplaintCardProps {
   complaint: {
     id: number;
-    complaint_number?: string; // <-- Add this
+    complaint_number?: string;
     title: string;
     description: string;
     role: { name: string };
@@ -19,11 +26,11 @@ interface ComplaintCardProps {
     resolution_notes?: string;
     created_at: string;
     resolved_at?: string;
-    user: { name: string };
+    user: { name?: string; first_name?: string; last_name?: string };
     resolvedBy?: { name: string };
     images: Array<{ image_url: string }>;
   };
-  userRole: User['role']; // Corrected type for userRole
+  userRole: string | undefined;
   onStatusUpdate?: (complaintId: number, status: string, notes?: string) => void;
 }
 
@@ -56,7 +63,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     }
   };
 
-  const canUpdateStatus = userRole === 'admin' || userRole === 'hr' || userRole === 'devops';
+  const canUpdateStatus = typeof userRole === 'string' && ['admin', 'hr', 'devops'].includes(userRole.toLowerCase());
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
@@ -108,49 +115,59 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     <>
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-6">
-          <div className="flex items-center gap-4 mb-2">
-            {complaint.complaint_number && (
-              <span className="font-bold text-black text-lg">
-                #{complaint.complaint_number}
-              </span>
-            )}
-            <h3 className="font-semibold text-lg mt-0">{complaint.title}</h3>
-          </div>
-          {/* Restore the status and department badges below the title */}
-          <div className="flex items-center gap-3 mb-2">
-            <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
-              {getStatusIcon(complaint.resolution_status)}
-              <span className="ml-1">{complaint.resolution_status}</span>
-            </Badge>
-          </div>
-          {/* Move the status dropdown below the title and badges */}
-          {canUpdateStatus && (
-            <div className="mb-2">
-              <select
-                value={newStatus}
-                onChange={e => setNewStatus(e.target.value)}
-                className="border rounded px-2 py-1"
-              >
-                <option value="Pending">Pending</option>
-                <option value="In-progress">In Progress</option>
-                <option value="Resolved">Resolved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-              {/* When status is being changed to Resolved, show the textarea for input in a lavender/purple box */}
-              {canUpdateStatus && newStatus === 'Resolved' && (
-                <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
-                  <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
-                  <div className="flex-1">
-                    <label className="block font-semibold mb-1 text-purple-800">Resolution Note</label>
-                    <textarea
-                      value={resolutionNotes}
-                      onChange={e => setResolutionNotes(e.target.value)}
-                      className="w-full border rounded p-2 text-purple-800 bg-purple-50 border-purple-200"
-                      placeholder="Add resolution note..."
-                    />
-                  </div>
-                </div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              {complaint.complaint_number && (
+                <span className="font-bold text-black text-lg">
+                  #{complaint.complaint_number}
+                </span>
               )}
+              <h3 className="font-semibold text-lg mt-0">{complaint.title}</h3>
+            </div>
+            {/* Status Dropdown for admin/hr/devops */}
+            {canUpdateStatus ? (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={newStatus}
+                  onValueChange={value => {
+                    setNewStatus(value);
+                    if (value !== 'Resolved') setResolutionNotes('');
+                    if (onStatusUpdate) onStatusUpdate(complaint.id, value, value === 'Resolved' ? resolutionNotes : undefined);
+                  }}
+                  disabled={isUpdating}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In-progress">In Progress</SelectItem>
+                    <SelectItem value="Resolved">Resolved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
+                {getStatusIcon(complaint.resolution_status)}
+                <span className="ml-1">{complaint.resolution_status}</span>
+              </Badge>
+            )}
+          </div>
+          {/* Resolution note input only when status is Resolved and user can update */}
+          {canUpdateStatus && newStatus === 'Resolved' && (
+            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
+              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
+              <div className="flex-1">
+                <label className="block font-semibold mb-1 text-purple-800">Resolution Note</label>
+                <textarea
+                  value={resolutionNotes}
+                  onChange={e => setResolutionNotes(e.target.value)}
+                  className="w-full border rounded p-2 text-purple-800 bg-purple-50 border-purple-200"
+                  placeholder="Add resolution note..."
+                  disabled={isUpdating || newStatus !== 'Resolved'}
+                />
+              </div>
             </div>
           )}
           {/* After resolution, show the note in a lavender/purple box with old style */}
@@ -167,15 +184,6 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
             <p className="text-sm text-muted-foreground mb-2">
               <strong>Resolved By:</strong> {complaint.resolvedBy.name}
             </p>
-          )}
-          {canUpdateStatus && getStatusUpdateOptions().length > 0 && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => setShowStatusDialog(true)}
-            >
-              Update Status
-            </Button>
           )}
           {/* Images Preview */}
           {complaint.images && complaint.images.length > 0 && (
@@ -207,7 +215,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-4">
             <div>
               <span className="font-medium text-muted-foreground">Reported by:</span>
-              <p className="font-medium">{complaint.user.name}</p>
+              <p className="font-medium">{complaint.user.first_name && complaint.user.last_name ? `${complaint.user.first_name} ${complaint.user.last_name}` : complaint.user.name || 'Unknown'}</p>
             </div>
             <div>
               <span className="font-medium text-muted-foreground">Department:</span>

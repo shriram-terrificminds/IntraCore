@@ -10,7 +10,7 @@ export interface Complaint {
   created_at: string;
   updated_at?: string;
   resolved_at?: string | null;
-  user?: { name: string };
+  user?: { name?: string; first_name?: string; last_name?: string };
   resolvedBy?: { name: string };
   images: Array<{ image_url: string }>;
 } 
