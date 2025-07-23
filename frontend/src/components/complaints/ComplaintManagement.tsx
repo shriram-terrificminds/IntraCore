@@ -230,7 +230,6 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
             Track and resolve employee complaints
           </p>
         </div>
- feature/complaint_api_integration
         <Button onClick={() => setNewComplaintOpen(true)}>
 
           <Plus className="h-4 w-4 mr-2" />
