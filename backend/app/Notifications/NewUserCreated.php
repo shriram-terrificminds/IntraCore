@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class NewUserCreated extends Notification
 {
@@ -18,11 +19,17 @@ class NewUserCreated extends Notification
         $this->plainPassword = $plainPassword;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function via($notifiable)
     {
         return ['mail'];
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function toMail($notifiable)
     {
         return (new MailMessage)
