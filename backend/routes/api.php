@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->prefix('complaints')->group(function () {
     Route::post('/', [ComplaintController::class, 'store']);
     Route::post('/list', [ComplaintController::class, 'list']);
     Route::get('/{complaint}', [ComplaintController::class, 'show']);
-    Route::patch('/{complaint}/status', [ComplaintController::class, 'updateStatus']);
+    Route::patch('{complaint}/update-status', [ComplaintController::class, 'updateStatus']);
 });
 
 // User Management
