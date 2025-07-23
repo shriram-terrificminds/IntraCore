@@ -1,6 +1,7 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import client from '../utils/client';
 
 interface UserType {
   email: string;
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const signIn = async (username: string, password: string, remember = false, onLogin?: () => void) => {
+  const signIn = async (username: string, password: string, remember = false, onLogin?: () => void, playerId?: string) => {
     setLoading(true);
     try {
       const url = 'http://10.0.2.2:8000/api/auth/login';
@@ -72,15 +73,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const token = data.token;
-      if (remember) {
-        await AsyncStorage.setItem('userToken', token);
-        console.log('[Auth] Token saved to AsyncStorage:', token);
-      } else {
-        await AsyncStorage.setItem('userToken', token);
-        console.log('[Auth] Token saved to AsyncStorage:', token);
-      }
+      await AsyncStorage.setItem('userToken', token);
+      console.log('[Auth] Token saved to AsyncStorage:', token);
       setTokenState(token);
       setUser({ email: username, role: data.user || 'Employee' });
+
+      // Call OneSignal player_id update API if playerId is provided
+      if (playerId) {
+        try {
+          const res = await client.post('/users/player-id', { player_id: playerId });
+          console.log('[OneSignal] player_id updated:', res);
+        } catch (err) {
+          console.error('[OneSignal] Failed to update player_id:', err);
+        }
+      }
+
       if (onLogin) onLogin();
     } catch (err: any) {
       console.error('Login error:', err);

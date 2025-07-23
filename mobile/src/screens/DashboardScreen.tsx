@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import client from '../utils/client';
+import OneSignal from 'react-native-onesignal';
 
 const DUMMY_ACTIVITY = [
   { id: '1', title: 'New mouse requested', user: 'John Doe', time: '2 hours ago', status: 'pending', color: '#3b82f6' },
@@ -34,6 +35,18 @@ const DashboardScreen = () => {
       console.log('[DashboardScreen] No token yet, skipping stats fetch.');
       return;
     }
+    // Send OneSignal player_id to backend after login
+    OneSignal.getDeviceState().then(async (deviceState) => {
+      const playerId = deviceState?.userId;
+      if (playerId) {
+        try {
+          const res = await client.post('/users/player-id', { player_id: playerId });
+          console.log('[OneSignal] player_id updated:', res);
+        } catch (err) {
+          console.error('[OneSignal] Failed to update player_id:', err);
+        }
+      }
+    });
     const fetchStats = async () => {
       setLoading(true);
       console.log('[DashboardScreen] Using token:', token);
@@ -66,13 +79,13 @@ const DashboardScreen = () => {
           <ActivityIndicator size="large" color="#3b82f6" />
         ) : (
           statCards.map((stat, idx) => (
-            <View key={stat.label} style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={styles.cardLabel}>{stat.label}</Text>
-                {stat.icon}
-              </View>
-              <Text style={styles.cardValue}>{stat.value}</Text>
+          <View key={stat.label} style={styles.card}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={styles.cardLabel}>{stat.label}</Text>
+              {stat.icon}
             </View>
+            <Text style={styles.cardValue}>{stat.value}</Text>
+          </View>
           ))
         )}
       </View>
