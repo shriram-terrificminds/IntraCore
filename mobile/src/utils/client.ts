@@ -4,7 +4,7 @@ const BASE_URL = 'http://10.0.2.2:8000/api';
 
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-async function getToken(): Promise<string | null> {
+export async function getToken(): Promise<string | null> {
   return await AsyncStorage.getItem('userToken');
 }
 

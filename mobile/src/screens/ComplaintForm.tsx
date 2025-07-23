@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import client, { getToken } from '../utils/client';
 
 const CATEGORIES = ['Pantry', 'Tech', 'HR', 'Admin'];
 const PRIORITIES = ['low', 'medium', 'high'];
@@ -14,6 +15,54 @@ const ComplaintForm = ({ navigation }: any) => {
   const [description, setDescription] = useState('');
   // Dummy image upload state
   const [images, setImages] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Map category to role_id for demo (in real app, fetch role_id from backend or context)
+  const categoryToRoleId: Record<string, string> = {
+    'Pantry': '2',
+    'Tech': '2',
+    'HR': '3',
+    'Admin': '4',
+  };
+
+  const handleSubmit = async () => {
+    if (!title || !description || !category) {
+      Alert.alert('Error', 'Please fill in all required fields.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('role_id', categoryToRoleId[category] || '2');
+      // For now, skip images
+      formData.append('images', '');
+      // You can add more fields as needed
+      const token = await getToken();
+      console.log('[ComplaintForm] Submitting complaint:', { title, description, role_id: categoryToRoleId[category] || '2' });
+      const response = await fetch('http://10.0.2.2:8000/api/complaints', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token || ''}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      console.log('[ComplaintForm] API response:', data);
+      if (response.ok) {
+        Alert.alert('Success', 'Complaint submitted successfully.');
+        navigation?.goBack?.();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to submit complaint.');
+      }
+    } catch (err: any) {
+      console.error('[ComplaintForm] API error:', err);
+      Alert.alert('Error', err.message || 'Failed to submit complaint.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -78,8 +127,8 @@ const ComplaintForm = ({ navigation }: any) => {
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation?.goBack?.()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.submitBtn}>
-          <Text style={styles.submitText}>Submit Complaint</Text>
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+          <Text style={styles.submitText}>{submitting ? 'Submitting...' : 'Submit Complaint'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

@@ -1,59 +1,50 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import client from '../utils/client';
 
-const FILTERS = ['All Complaints', 'Pending Verification', 'Verified', 'Resolved'];
-
-const MOCK_COMPLAINTS = [
-  {
-    id: '1',
-    title: 'Coffee machine not working',
-    status: 'Pending Verification',
-    priority: 'medium',
-    category: 'Pantry',
-    description: 'The coffee machine in the main pantry is not dispensing coffee properly',
-    images: [
-      'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=facearea&w=64&h=64',
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=64&h=64',
-    ],
-    reportedBy: 'John Doe',
-    assignedTo: 'Admin Team',
-    location: 'Main Office - Floor 3',
-    date: '2024-01-15',
-  },
-  {
-    id: '2',
-    title: 'WiFi connectivity issues',
-    status: 'Verified',
-    priority: 'high',
-    category: 'Tech',
-    description: 'Frequent disconnections and slow internet speed in the conference room',
-    images: [
-      'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=64&h=64',
-    ],
-    reportedBy: 'Sarah Smith',
-    assignedTo: 'IT Team',
-    location: 'Conference Room',
-    date: '2024-01-14',
-  },
-];
+const FILTERS = ['All Complaints', 'Pending Verification', 'Verified', 'Resolved', 'In-progress', 'Pending', 'Rejected'];
 
 const statusStyles = {
   'Pending Verification': { color: '#b59f00', bg: '#fef9c3', icon: 'access-time', label: 'Pending Verification' },
-  Verified: { color: '#2563eb', bg: '#dbeafe', icon: 'eye-outline', label: 'Verified' },
-  Resolved: { color: '#059669', bg: '#d1fae5', icon: 'check-circle-outline', label: 'Resolved' },
+  'Verified': { color: '#2563eb', bg: '#dbeafe', icon: 'eye-outline', label: 'Verified' },
+  'Resolved': { color: '#059669', bg: '#d1fae5', icon: 'check-circle-outline', label: 'Resolved' },
+  'In-progress': { color: '#f59e42', bg: '#fef3c7', icon: 'autorenew', label: 'In-progress' },
+  'Pending': { color: '#b59f00', bg: '#fef9c3', icon: 'access-time', label: 'Pending' },
+  'Rejected': { color: '#ef4444', bg: '#fee2e2', icon: 'cancel', label: 'Rejected' },
 };
 
 const ComplaintsList = () => {
   const [filter, setFilter] = useState('All Complaints');
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const navigation = useNavigation();
 
-  const filtered =
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchComplaints = async () => {
+        setLoading(true);
+        try {
+          const data = await client.post('/complaints/list', { search: '', page });
+          setComplaints(data.data || []);
+        } catch (err) {
+          console.error('Failed to fetch complaints:', err);
+          setComplaints([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchComplaints();
+    }, [page])
+  );
+
+  const filtered: any[] =
     filter === 'All Complaints'
-      ? MOCK_COMPLAINTS
-      : MOCK_COMPLAINTS.filter(r => r.status === filter);
+      ? complaints
+      : complaints.filter(r => r.resolution_status === filter);
 
   return (
     <ScrollView style={{ backgroundColor: '#fff' }}>
@@ -62,7 +53,7 @@ const ComplaintsList = () => {
           <Text style={styles.heading}>Complaint Management</Text>
           <Text style={styles.subtitle}>Track and resolve office complaints efficiently</Text>
         </View>
-        <TouchableOpacity style={styles.newComplaintBtn} onPress={() => navigation.navigate('ComplaintForm')}>
+        <TouchableOpacity style={styles.newComplaintBtn} onPress={() => (navigation as any).navigate('ComplaintForm')}>
           <MaterialIcons name="add" size={22} color="#fff" />
           <Text style={styles.newComplaintText}>New Complaint</Text>
         </TouchableOpacity>
@@ -78,53 +69,58 @@ const ComplaintsList = () => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <FlatList
-        data={filtered}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          const status = statusStyles[item.status as keyof typeof statusStyles];
-          return (
-            <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: status?.bg }]}> 
-                  <MaterialIcons name={status?.icon} size={16} color={status?.color} style={{ marginRight: 2 }} />
-                  <Text style={{ color: status?.color, fontWeight: 'bold', fontSize: 13 }}>{status?.label}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 32 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }: { item: any }) => {
+            const status = statusStyles[item.resolution_status as keyof typeof statusStyles];
+            return (
+              <TouchableOpacity onPress={() => (navigation as any).navigate('ComplaintDetail', { id: item.id })} activeOpacity={0.85} style={styles.card}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: status?.bg }]}> 
+                    <MaterialIcons name={status?.icon} size={16} color={status?.color} style={{ marginRight: 2 }} />
+                    <Text style={{ color: status?.color, fontWeight: 'bold', fontSize: 13 }}>{status?.label}</Text>
+                  </View>
+                  <View style={styles.priorityBadge}><Text style={styles.priorityText}>{item.priority || '-'}</Text></View>
+                  <View style={styles.categoryBadge}><Text style={styles.categoryText}>{item.role?.name || '-'}</Text></View>
                 </View>
-                <View style={styles.priorityBadge}><Text style={styles.priorityText}>{item.priority}</Text></View>
-                <View style={styles.categoryBadge}><Text style={styles.categoryText}>{item.category}</Text></View>
-              </View>
-              <Text style={styles.cardDesc}>{item.description}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-                <MaterialIcons name="image" size={18} color="#222" style={{ marginRight: 4 }} />
-                <Text style={styles.attachLabel}>Attached Images ({item.images.length})</Text>
-              </View>
-              <View style={{ flexDirection: 'row', marginTop: 6, marginBottom: 6 }}>
-                {item.images.map((img, idx) => (
-                  <Image key={idx} source={{ uri: img }} style={styles.thumb} />
-                ))}
-              </View>
-              <View style={styles.cardDetailsRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardDetailsLabel}>Reported by:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.reportedBy}</Text>
-                  <Text style={styles.cardDetailsLabel}>Location:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.location}</Text>
+                <Text style={styles.cardDesc}>{item.description}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                  <MaterialIcons name="image" size={18} color="#222" style={{ marginRight: 4 }} />
+                  <Text style={styles.attachLabel}>Attached Images ({item.images?.length || 0})</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardDetailsLabel}>Assigned to:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.assignedTo}</Text>
-                  <Text style={styles.cardDetailsLabel}>Date:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.date}</Text>
+                <View style={{ flexDirection: 'row', marginTop: 6, marginBottom: 6 }}>
+                  {item.images && item.images.length > 0 ? item.images.map((img: any, idx: number) => (
+                    <Image key={idx} source={{ uri: img }} style={styles.thumb} />
+                  )) : <Text style={{ color: '#64748b' }}>No images</Text>}
                 </View>
-              </View>
-            </View>
-          );
-        }}
-        contentContainerStyle={{ paddingBottom: 32 }}
-        style={{ marginTop: 8 }}
-        scrollEnabled={false}
-      />
+                <View style={styles.cardDetailsRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardDetailsLabel}>Reported by:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.user?.first_name} {item.user?.last_name}</Text>
+                    <Text style={styles.cardDetailsLabel}>Location:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.user?.location_id || '-'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardDetailsLabel}>Assigned to:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.resolved_by ? `${item.resolved_by.first_name} ${item.resolved_by.last_name}` : '-'}</Text>
+                    <Text style={styles.cardDetailsLabel}>Date:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.created_at ? item.created_at.split('T')[0] : '-'}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: 32 }}
+          style={{ marginTop: 8 }}
+          scrollEnabled={false}
+          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 32, color: '#64748b' }}>No complaints found.</Text>}
+        />
+      )}
     </ScrollView>
   );
 };
