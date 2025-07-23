@@ -63,6 +63,22 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     }
   };
 
+  // Employee badge color map
+  const employeeStatusStyle = (status: string) => {
+    switch (status) {
+      case 'Pending':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-300';
+      case 'In-progress':
+        return 'bg-orange-50 text-orange-700 border-orange-300';
+      case 'Resolved':
+        return 'bg-green-50 text-green-700 border-green-300';
+      case 'Rejected':
+        return 'bg-red-50 text-red-700 border-red-300';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-300';
+    }
+  };
+
   const canUpdateStatus = typeof userRole === 'string' && ['admin', 'hr', 'devops'].includes(userRole.toLowerCase());
 
   const handleImageClick = (index: number) => {
@@ -147,6 +163,11 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
                   </SelectContent>
                 </Select>
               </div>
+            ) : userRole && userRole.toLowerCase() === 'employee' ? (
+              <span className={`inline-block px-3 py-1 rounded-md font-semibold text-xs uppercase tracking-wide border ${employeeStatusStyle(complaint.resolution_status)} shadow-sm`}
+                style={{ minWidth: 90, textAlign: 'center' }}>
+                {complaint.resolution_status}
+              </span>
             ) : (
               <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
                 {getStatusIcon(complaint.resolution_status)}
@@ -223,7 +244,13 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
             </div>
             <div>
               <span className="font-medium text-muted-foreground">Created:</span>
-              <p className="font-medium">{new Date(complaint.created_at).toLocaleDateString()}</p>
+              <p className="font-medium">{(() => {
+                const d = new Date(complaint.created_at);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+              })()}</p>
             </div>
             {complaint.resolved_at && (
               <div>
