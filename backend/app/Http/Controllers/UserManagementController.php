@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
@@ -82,7 +81,7 @@ class UserManagementController extends Controller
             'password' => 'sometimes|nullable|string|min:8',
             'role_id' => ['sometimes', Rule::exists('roles', 'id')],
             'location_id' => ['sometimes', Rule::exists('locations', 'id')],
-        ]); 
+        ]);
         $user->fill($validated);
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));

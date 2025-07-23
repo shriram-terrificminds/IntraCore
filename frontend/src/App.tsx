@@ -21,12 +21,11 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Index />} /> {/* Add this route for login page */}
-          <Route path="/complaints" element={<ComplaintsDemo />} />
           <Route
             path="/reset-password"
             element={<ResetPasswordForm onBackToLogin={() => window.location.href = '/'} />}
           />
-           <Route
+          <Route
             path="/forgot-password"
             element={<ForgotPasswordForm onBackToLogin={() => window.location.href = '/'} />}
           />

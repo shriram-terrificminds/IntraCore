@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class StatusUpdatedNotification extends Notification
 {
@@ -22,6 +23,9 @@ class StatusUpdatedNotification extends Notification
         $this->updatedBy = $updatedBy;
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function via($notifiable)
     {
         return ['mail'];
