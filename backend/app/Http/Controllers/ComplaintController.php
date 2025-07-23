@@ -7,6 +7,7 @@ use App\Enums\RoleEnum;
 use App\Models\Complaint;
 use App\Models\ComplaintImage;
 use App\Models\Role;
+use Berkayk\OneSignal\OneSignalFacade as OneSignal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -52,6 +53,13 @@ class ComplaintController extends Controller
                 Auth::user()->first_name . ' ' . Auth::user()->last_name,
                 $roleUser->role->name
             ));
+            // Send OneSignal push notification if player_id exists
+            if ($roleUser->player_id) {
+                OneSignal::sendNotificationToUser(
+                    'A new complaint has been assigned to your role: ' . $roleUser->role->name,
+                    $roleUser->player_id
+                );
+            }
         }
 
         return response()->json([
@@ -70,7 +78,6 @@ class ComplaintController extends Controller
         $userRoleName = $user->role->name;
 
         $query = Complaint::query();
-        $query->orderBy('created_at', 'desc');
 
         // Role-based access control
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
@@ -101,8 +108,7 @@ class ComplaintController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('complaint_number', 'like', "%$search%")
                   ->orWhere('title', 'like', "%$search%")
-                  ->orWhere('description', 'like', "%$search%")
-                  ;
+                  ->orWhere('description', 'like', "%$search%");
             });
         }
 
@@ -133,6 +139,7 @@ class ComplaintController extends Controller
     /**
      * @
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function updateStatus(Request $request, Complaint $complaint)
@@ -174,7 +181,7 @@ class ComplaintController extends Controller
         } else {
             // If the complaint is already in a final state, prevent further updates
             if (in_array($currentStatus, [ComplaintStatusEnum::RESOLVED->value, ComplaintStatusEnum::REJECTED->value])) {
-                 return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' complaint.'], 400);
+                return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' complaint.'], 400);
             }
             // Add a generic error for any other unexpected status transition
             return response()->json(['message' => 'Invalid status transition.'], 400);
@@ -206,6 +213,13 @@ class ComplaintController extends Controller
             $newStatus,
             Auth::user()->first_name . ' ' . Auth::user()->last_name
         ));
+        // Send OneSignal push notification if player_id exists
+        if ($complaintCreator->player_id) {
+            OneSignal::sendNotificationToUser(
+                'The status of your complaint has been updated to: ' . $newStatus,
+                $complaintCreator->player_id
+            );
+        }
         return response()->json([
             'message' => 'Complaint status updated successfully.',
             'complaint' => $complaint->load(['user', 'role', 'resolvedBy', 'images'])

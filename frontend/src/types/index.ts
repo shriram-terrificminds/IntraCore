@@ -75,15 +75,6 @@ export interface Broadcast {
   updated_at: string;
 }
 
-export interface TeamConfig {
-  id: number;
-  team: string;
-  location: string;
-  email: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface AuthResponse {
   user: User;
   token: string;

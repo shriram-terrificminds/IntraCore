@@ -29,10 +29,8 @@ interface NewComplaintDialogProps {
 
 // Define ROLES here as it's used in this component
 const ROLES = [
-  { id: 1, name: 'Admin' },
   { id: 2, name: 'HR' },
   { id: 3, name: 'DevOps' },
-  { id: 4, name: 'Employee' },
 ];
 
 export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplaintDialogProps) {
@@ -40,6 +38,7 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
     title: '',
     role_id: '',
     description: '',
+    images: [] as File[],
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -149,6 +148,7 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
         title: '',
         role_id: '',
         description: '',
+        images: [],
       });
       setImages([]);
     } catch (error) {
@@ -187,7 +187,7 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
           </div>
 
           <div>
-            <Label htmlFor="role">Role/Department *</Label>
+            <Label htmlFor="role">Department / Role *</Label>
             <Select
               value={formData.role_id}
               onValueChange={(value) => {
@@ -196,7 +196,7 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
               }}
             >
               <SelectTrigger className={errors.role_id ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select role/department" />
+                <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
                 {ROLES.map(role => (

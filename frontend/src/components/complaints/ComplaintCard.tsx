@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '../../types'; // Import User to get UserRole
+import { Complaint } from '@/types/Complaint';
 import {
   Select,
   SelectTrigger,
@@ -16,31 +16,13 @@ import {
 } from '@/components/ui/select';
 
 interface ComplaintCardProps {
-  complaint: {
-    id: number;
-    complaint_number?: string;
-    title: string;
-    description: string;
-    role: { name: string };
-    resolution_status: string;
-    resolution_notes?: string;
-    created_at: string;
-    resolved_at?: string;
-    user: { name?: string; first_name?: string; last_name?: string };
-    resolvedBy?: { name: string };
-    images: Array<{ image_url: string }>;
-  };
-  userRole: string | undefined;
+  complaint: Complaint;
   onStatusUpdate?: (complaintId: number, status: string, notes?: string) => void;
 }
 
-export function ComplaintCard({ complaint, userRole, onStatusUpdate }: ComplaintCardProps) {
+export function ComplaintCard({ complaint, onStatusUpdate }: ComplaintCardProps) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [newStatus, setNewStatus] = useState(complaint.resolution_status);
-  // const [resolutionNotes, setResolutionNotes] = useState(complaint.resolution_notes || '');
-  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   const getStatusIcon = (status: string) => {
@@ -53,7 +35,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Complaint['resolution_status']) => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'In-progress': return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -79,7 +61,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     }
   };
 
-  const canUpdateStatus = typeof userRole === 'string' && ['admin', 'hr', 'devops'].includes(userRole.toLowerCase());
+  const canUpdateStatus = typeof complaint.role.name === 'string' && ['admin', 'hr', 'devops'].includes(complaint.role.name.toLowerCase());
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
@@ -94,38 +76,57 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     setCurrentImageIndex((prev) => (prev - 1 + complaint.images.length) % complaint.images.length);
   };
 
-  const handleStatusUpdate = async () => {
+  const handleStatusUpdate = async (newStatus: Complaint['resolution_status']) => {
     if (!onStatusUpdate) return;
 
-    setIsUpdating(true);
     try {
       await onStatusUpdate(complaint.id, newStatus);
-      setShowStatusDialog(false);
-      toast({
-        title: 'Status Updated',
-        description: 'Complaint status has been updated successfully.',
-      });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update status. Please try again.',
+        description: error.response.data.message,
         variant: 'destructive',
       });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
-  const getStatusUpdateOptions = () => {
-    switch (complaint.resolution_status) {
-      case 'Pending':
-        return ['In-progress'];
-      case 'In-progress':
-        return ['Resolved', 'Rejected'];
-      default:
-        return [];
+  const getStatusBadge = (status: Complaint['resolution_status']) => {
+    switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Resolved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'In-progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Rejected': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  let getStatusUpdateOptions: { value: Complaint['resolution_status'], label: string }[] = [];
+  let disabled = false;
+  switch (complaint.resolution_status) {
+    case 'Pending':
+      getStatusUpdateOptions = [
+        { value: 'Pending', label: 'Pending' },
+        { value: 'In-progress', label: 'In-progress' },
+      ];
+      break;
+    case 'In-progress':
+      getStatusUpdateOptions = [
+        { value: 'In-progress', label: 'In-progress' },
+        { value: 'Resolved', label: 'Resolved' },
+        { value: 'Rejected', label: 'Rejected' },
+      ];
+      break;
+    case 'Resolved':
+    case 'Rejected':
+    default:
+      getStatusUpdateOptions = [
+        { value: complaint.resolution_status, label: complaint.resolution_status },
+      ];
+      disabled = true;
+      break;
+  }
+
+  console.log('Status options for ', complaint.complaint_number, ':', getStatusUpdateOptions);
 
   return (
     <>
@@ -144,26 +145,26 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
             {canUpdateStatus ? (
               <div className="flex items-center gap-2">
                 <Select
-                  value={newStatus}
+                  value={complaint.resolution_status}
                   onValueChange={value => {
-                    setNewStatus(value);
-                    // if (value !== 'Resolved') setResolutionNotes('');
-                    // if (onStatusUpdate) onStatusUpdate(complaint.id, value, value === 'Resolved' ? resolutionNotes : undefined);
+                    if (value !== complaint.resolution_status) handleStatusUpdate(value as Complaint['resolution_status']);
                   }}
-                  disabled={isUpdating}
+                  disabled={disabled}
                 >
-                  <SelectTrigger className="w-36">
+                  <SelectTrigger
+                    className={`w-[120px] rounded-full border-0 font-semibold text-center flex items-center justify-center ${getStatusBadge(complaint.resolution_status)}`}
+                    style={{ minHeight: '32px', paddingLeft: 0, paddingRight: 0 }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="In-progress">In Progress</SelectItem>
-                    <SelectItem value="Resolved">Resolved</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
+                    {getStatusUpdateOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value} className={`rounded-full ${getStatusBadge(opt.value)}`}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            ) : userRole && userRole.toLowerCase() === 'employee' ? (
+            ) : complaint.role.name && complaint.role.name.toLowerCase() === 'employee' ? (
               <span className={`inline-block px-3 py-1 rounded-md font-semibold text-xs uppercase tracking-wide border ${employeeStatusStyle(complaint.resolution_status)} shadow-sm`}
                 style={{ minWidth: 90, textAlign: 'center' }}>
                 {complaint.resolution_status}
@@ -175,31 +176,6 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               </Badge>
             )}
           </div>
-          {/* Resolution note input only when status is Resolved and user can update */}
-          {/* {canUpdateStatus && newStatus === 'Resolved' && (
-            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
-              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
-              <div className="flex-1">
-                <label className="block font-semibold mb-1 text-purple-800">Resolution Note</label>
-                <textarea
-                  value={resolutionNotes}
-                  onChange={e => setResolutionNotes(e.target.value)}
-                  className="w-full border rounded p-2 text-purple-800 bg-purple-50 border-purple-200"
-                  placeholder="Add resolution note..."
-                  disabled={isUpdating || newStatus !== 'Resolved'}
-                />
-              </div>
-            </div>
-          )} */}
-          {/* After resolution, show the note in a lavender/purple box with old style */}
-          {/* {complaint.resolution_status === 'Resolved' && complaint.resolution_notes && (
-            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
-              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
-              <div className="flex-1 text-purple-800">
-                <strong>Resolution Note:</strong> {complaint.resolution_notes}
-              </div>
-            </div>
-          )} */}
           <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
           {complaint.resolvedBy && (
             <p className="text-sm text-muted-foreground mb-2">
@@ -243,7 +219,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               <p className="font-medium">{complaint.role.name}</p>
             </div>
             <div>
-              <span className="font-medium text-muted-foreground">Created:</span>
+              <span className="font-medium text-muted-foreground">Created on:</span>
               <p className="font-medium">{(() => {
                 const d = new Date(complaint.created_at);
                 const day = String(d.getDate()).padStart(2, '0');
@@ -290,57 +266,6 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Status Update Dialog */}
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Update Complaint Status</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">New Status</label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-                className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-              >
-                {getStatusUpdateOptions().map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* {(newStatus === 'Resolved' || newStatus === 'Rejected' || newStatus === 'In-progress') && (
-              <div>
-                <label className="text-sm font-medium">Resolution Notes</label>
-                <Textarea
-                  value={resolutionNotes}
-                  onChange={(e) => setResolutionNotes(e.target.value)}
-                  placeholder="Add notes about the resolution..."
-                  className="mt-1 min-h-[100px]"
-                />
-              </div>
-            )} */}
-
-            <div className="flex justify-end gap-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowStatusDialog(false)}
-                disabled={isUpdating}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleStatusUpdate}
-                disabled={isUpdating}
-              >
-                {isUpdating ? 'Updating...' : 'Update Status'}
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </>

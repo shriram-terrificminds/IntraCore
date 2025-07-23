@@ -1,13 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import React from 'react';
 import api from '../../services/api'; // Add this import at the top
-import { Plus, Search, Filter, SortDesc } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -18,7 +14,6 @@ import {
 import { NewComplaintDialog } from './NewComplaintDialog';
 import { ComplaintCard } from './ComplaintCard';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '../../types'; // Import User to get UserRole
 import { Complaint } from '@/types/Complaint';
 
 // Debounce hook
@@ -47,15 +42,8 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // Remove any local interface Complaint definition in this file. Only use the imported Complaint type from '@/types/Complaint'.
 interface ComplaintManagementProps {
-  userRole: { id: string; name: string; description: string } | undefined;
+  userRole: { id: string; name: string; } | undefined;
 }
-
-const ROLES = [
-  { id: 1, name: 'Admin' },
-  { id: 2, name: 'Hr' },
-  { id: 3, name: 'Devops' },
-  { id: 4, name: 'Employee' },
-];
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
@@ -78,12 +66,13 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   const debouncedSearchTerm = useDebounce(searchTerm, 700);
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('latest');
+  const [sortOrder, setSortOrder] = useState('desc');
   const { toast } = useToast();
 
   const [newComplaintOpen, setNewComplaintOpen] = useState(false); // Initialize state
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(10);
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -128,10 +117,13 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
         const filters: Record<string, string | number> = { page };
         if (statusFilter !== 'all') filters.resolution_status = statusFilter;
         if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+        filters.sort_by = 'created_at';
+        filters.sort_order = sortOrder;
         if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
         const response = await api.post('/complaints/list', filters);
         const complaintsData = response.data.data || [];
         setTotalPages(response.data.last_page || 1);
+        setTotalRecords(response.data.total || 10);
         setComplaints(complaintsData);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -144,7 +136,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       }
     };
     fetchFilteredComplaints();
-  }, [statusFilter, roleFilter, page, debouncedSearchTerm]);
+  }, [statusFilter, roleFilter, page, debouncedSearchTerm, sortOrder]);
 
   const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
     setLoading(true);
@@ -157,13 +149,19 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       const filters: Record<string, string | number> = { page };
       if (statusFilter !== 'all') filters.resolution_status = statusFilter;
       if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+      filters.sort_by = 'created_at';
+      filters.sort_order = sortOrder;
       if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
       const response = await api.post('/complaints/list', filters);
       setComplaints(response.data.data || []);
+      toast({
+        title: 'Status Updated',
+        description: 'Complaint status has been updated successfully.',
+      });
     } catch (error) {
       toast({
         title: 'Status Update Failed',
-        description: 'Could not update complaint status. Please try again.',
+        description: error.response.data.message,
         variant: 'destructive',
       });
     } finally {
@@ -211,6 +209,8 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       const filters: Record<string, string | number> = { page };
       if (statusFilter !== 'all') filters.resolution_status = statusFilter;
       if (roleFilter !== 'all') filters.role = roleFilter.toLowerCase();
+      filters.sort_by = 'created_at';
+      filters.sort_order = sortOrder;
       if (debouncedSearchTerm.trim()) filters.search = debouncedSearchTerm.trim();
       const response = await api.post('/complaints/list', filters);
       setComplaints(response.data.data || []);
@@ -248,7 +248,6 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
           </p>
         </div>
         <Button onClick={() => setNewComplaintOpen(true)}>
-
           <Plus className="h-4 w-4 mr-2" />
           New Complaint
         </Button>
@@ -258,70 +257,63 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       {/* Removed stats cards as per request */}
 
       {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
-                placeholder="Search by title or complaint #"
+                placeholder="Search by complaint number or title or description"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setSearchHadFocus(true)}
                 onBlur={() => setSearchHadFocus(false)}
-                className="pl-10"
+                className="pl-10 pr-4"
               />
             </div>
+            <div className="flex gap-2">
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {/* Role Filter */}
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem key="2" value="Hr">Hr</SelectItem>
+                  <SelectItem key="3" value="Devops">Devops</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* Role Filter */}
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {ROLES.map(role => (
-                  <SelectItem key={role.id} value={role.name}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">Latest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Sort */}
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Latest First</SelectItem>
+                  <SelectItem value="asc">Oldest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredComplaints.length} of {complaints.length} complaints
+          {totalRecords} complaints
         </p>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
@@ -348,10 +340,9 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
               complaint={{
                 ...complaint,
                 role: complaint.role || { name: 'Unknown' },
-                user: complaint.user || { name: 'Unknown' },
+                user: complaint.user || { name: 'Unknown',first_name: 'Unknown', last_name: 'User' },
                 resolution_status: complaint.resolution_status || 'Pending',
               }}
-              userRole={userRole?.name}
               onStatusUpdate={handleStatusUpdate}
             />
           ))

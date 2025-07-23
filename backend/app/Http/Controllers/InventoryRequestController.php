@@ -6,6 +6,7 @@ use App\Enums\InventoryRequestStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\InventoryRequest;
 use App\Models\Role;
+use Berkayk\OneSignal\OneSignalFacade as OneSignal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -41,6 +42,13 @@ class InventoryRequestController extends Controller
                 Auth::user()->first_name . ' ' . Auth::user()->last_name,
                 $roleUser->role->name
             ));
+            // Send OneSignal push notification if player_id exists
+            if ($roleUser->player_id) {
+                OneSignal::sendNotificationToUser(
+                    'A new inventory request has been assigned to your role: ' . $roleUser->role->name,
+                    $roleUser->player_id
+                );
+            }
         }
         return response()->json([
             'message' => 'Inventory request submitted successfully.',
@@ -58,7 +66,6 @@ class InventoryRequestController extends Controller
         $userRoleName = $user->role->name;
 
         $query = InventoryRequest::query();
-        $query->orderBy('created_at', 'desc');
 
         // Role-based access control
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
@@ -69,13 +76,6 @@ class InventoryRequestController extends Controller
                 $q->where('role_id', $user->role_id)
                   ->orWhere('user_id', $user->id);
             });
-        } elseif ($userRoleName === RoleEnum::ADMIN->value) {
-            // Admin can see all, but if they filter by role_id, ensure their own requests are still visible
-            // This block is primarily to add the orWhere for user_id to Admin's view.
-            // The global filter for Admin is effectively no filter.
-             $query->where(function ($q) use ($user) {
-                $q->orWhere('user_id', $user->id); // Admin should see their own requests if any
-             });
         }
 
         // Filters for status and role_id (if not already filtered by role-based access)
@@ -83,17 +83,12 @@ class InventoryRequestController extends Controller
             $query->where('status', $request->status);
         }
 
-        // If an Admin or HR/DevOps user explicitly requests a specific role_id, allow it.
-        // Otherwise, the role-based filter above will take precedence for HR/DevOps users.
-        if ($request->has('role_id') && $userRoleName === RoleEnum::ADMIN->value) {
-            $query->whereHas('role', function ($q) use ($request) {
-                $q->where('id', $request->role_id);
+        // Filter by role (by name, case-insensitive)
+        if ($request->filled('role') && $request->role !== 'all') {
+            $roleName = $request->role;
+            $query->whereHas('role', function ($q) use ($roleName) {
+                $q->whereRaw('LOWER(name) = ?', [strtolower($roleName)]);
             });
-        } elseif (in_array($userRoleName, [RoleEnum::HR->value, RoleEnum::DEVOPS->value])) {
-             // For HR/DevOps, ensure they can only filter by their own role_id if they provide it
-            if ($request->role_id != $user->role_id) {
-                return response()->json(['message' => 'Unauthorized to filter by this role.'], 403);
-            }
         }
 
         // Search by request_number or title
@@ -101,7 +96,8 @@ class InventoryRequestController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('request_number', 'like', "%$search%")
-                  ->orWhere('title', 'like', "%$search%");
+                  ->orWhere('title', 'like', "%$search%")
+                  ->orWhere('description', 'like', "%$search%");
             });
         }
 
@@ -110,7 +106,10 @@ class InventoryRequestController extends Controller
             $query->orderBy($request->sort_by, $request->sort_order);
         }
 
-        $requests = $query->with(['approvedBy'])->paginate(10);
+        // Pagination
+        $perPage = 10;
+        $page = $request->input('page', 1);
+        $requests = $query->with(['user', 'role', 'approvedBy'])->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json($requests);
     }
@@ -176,7 +175,7 @@ class InventoryRequestController extends Controller
         } else {
             // If the request is already in a final state or an unknown state, prevent further updates
             if (in_array($currentStatus, [InventoryRequestStatusEnum::REJECTED->value, InventoryRequestStatusEnum::RECEIVED->value])) {
-                 return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' request.'], 400);
+                return response()->json(['message' => 'Cannot update status for a ' . $currentStatus . ' request.'], 400);
             }
             // Add a generic error for any other unexpected status transition
             return response()->json(['message' => 'Invalid status transition.'], 400);
@@ -202,6 +201,13 @@ class InventoryRequestController extends Controller
             $newStatus,
             Auth::user()->first_name . ' ' . Auth::user()->last_name
         ));
+        // Send OneSignal push notification if player_id exists
+        if ($requestCreator->player_id) {
+            OneSignal::sendNotificationToUser(
+                'The status of your inventory request has been updated to: ' . $newStatus,
+                $requestCreator->player_id
+            );
+        }
         return response()->json([
             'message' => 'Inventory request status updated successfully.',
             'request' => $inventoryRequest->load(['user', 'role', 'approvedBy'])
