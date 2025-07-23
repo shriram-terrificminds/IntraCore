@@ -221,7 +221,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen w-full p-8 bg-white">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

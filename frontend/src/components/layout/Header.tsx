@@ -30,7 +30,7 @@ export function Header({}: HeaderProps) {
   // };
 
   return (
-    <header className="h-16 border-b bg-background flex items-center justify-between px-6">
+    <header className="h-16 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
         {/* <SidebarTrigger /> */}
         <span className="text-sm text-muted-foreground">Inventory & Complaint Management</span>

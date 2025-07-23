@@ -162,18 +162,22 @@ export function Dashboard({ userRole }: DashboardProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen w-full p-8 bg-white">
+      {/* Greeting and Actions */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Overview of IntraCore operations
-          </p>
+          <h2 className="text-4xl font-extrabold mb-4 text-black">
+            Good {new Date().getHours() < 12 ? 'morning' : (new Date().getHours() < 18 ? 'afternoon' : 'evening')},
+            <span className="ml-2 text-4xl bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-extrabold align-middle">
+              {user?.first_name || 'User'}
+            </span>!
+          </h2>
+          <p className="text-white/80">Here’s what’s happening today.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Label htmlFor="time-range-select">Time Range</Label>
+          <Label htmlFor="time-range-select" className="text-white">Time Range</Label>
           <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger id="time-range-select" className="w-[180px]">
+            <SelectTrigger id="time-range-select" className="w-[180px] bg-white/20 text-white border-white/30">
               <SelectValue placeholder="Select time range" />
             </SelectTrigger>
             <SelectContent>

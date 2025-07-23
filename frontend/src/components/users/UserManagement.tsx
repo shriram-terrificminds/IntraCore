@@ -127,7 +127,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
   const adminCount = users.filter(user => user.role.name === 'Admin').length;
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen w-full p-8 bg-white">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
