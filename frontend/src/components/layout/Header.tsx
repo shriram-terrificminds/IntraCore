@@ -58,22 +58,24 @@ export function Header({}: HeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col items-center space-y-2 pb-2">
-                <Avatar className="h-14 w-14">
+              <div className="flex flex-col items-start space-y-2 pb-2 w-full">
+                <Avatar className="h-14 w-14 mx-auto">
                   <AvatarImage src={user?.profile_image || 'https://randomuser.me/api/portraits/men/1.jpg'} alt={`${user?.first_name} ${user?.last_name}`} />
                   <AvatarFallback>{user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col space-y-1 items-center">
+                <div className="flex flex-col space-y-1 w-full">
                   <p className="text-sm font-medium leading-none">{user?.first_name} {user?.last_name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
-                    <User className="h-3 w-3" /> {user?.role.name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {user?.location.name}
-                  </p>
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                      <User className="h-3 w-3" /> {user?.role.name}
+                    </span>
+                    <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {user?.location.name}
+                    </span>
+                  </div>
                 </div>
               </div>
             </DropdownMenuLabel>
