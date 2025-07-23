@@ -166,9 +166,6 @@ export function Dashboard({ userRole }: DashboardProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Overview of IntraCore operations
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <Label htmlFor="time-range-select">Time Range</Label>

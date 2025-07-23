@@ -39,7 +39,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState(complaint.resolution_status);
-  const [resolutionNotes, setResolutionNotes] = useState(complaint.resolution_notes || '');
+  // const [resolutionNotes, setResolutionNotes] = useState(complaint.resolution_notes || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
@@ -99,7 +99,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
 
     setIsUpdating(true);
     try {
-      await onStatusUpdate(complaint.id, newStatus, resolutionNotes);
+      await onStatusUpdate(complaint.id, newStatus);
       setShowStatusDialog(false);
       toast({
         title: 'Status Updated',
@@ -147,8 +147,8 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
                   value={newStatus}
                   onValueChange={value => {
                     setNewStatus(value);
-                    if (value !== 'Resolved') setResolutionNotes('');
-                    if (onStatusUpdate) onStatusUpdate(complaint.id, value, value === 'Resolved' ? resolutionNotes : undefined);
+                    // if (value !== 'Resolved') setResolutionNotes('');
+                    // if (onStatusUpdate) onStatusUpdate(complaint.id, value, value === 'Resolved' ? resolutionNotes : undefined);
                   }}
                   disabled={isUpdating}
                 >
@@ -176,7 +176,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
             )}
           </div>
           {/* Resolution note input only when status is Resolved and user can update */}
-          {canUpdateStatus && newStatus === 'Resolved' && (
+          {/* {canUpdateStatus && newStatus === 'Resolved' && (
             <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
               <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
               <div className="flex-1">
@@ -190,16 +190,16 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
                 />
               </div>
             </div>
-          )}
+          )} */}
           {/* After resolution, show the note in a lavender/purple box with old style */}
-          {complaint.resolution_status === 'Resolved' && complaint.resolution_notes && (
+          {/* {complaint.resolution_status === 'Resolved' && complaint.resolution_notes && (
             <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
               <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
               <div className="flex-1 text-purple-800">
                 <strong>Resolution Note:</strong> {complaint.resolution_notes}
               </div>
             </div>
-          )}
+          )} */}
           <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
           {complaint.resolvedBy && (
             <p className="text-sm text-muted-foreground mb-2">
@@ -313,7 +313,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               </select>
             </div>
 
-            {(newStatus === 'Resolved' || newStatus === 'Rejected' || newStatus === 'In-progress') && (
+            {/* {(newStatus === 'Resolved' || newStatus === 'Rejected' || newStatus === 'In-progress') && (
               <div>
                 <label className="text-sm font-medium">Resolution Notes</label>
                 <Textarea
@@ -323,7 +323,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
                   className="mt-1 min-h-[100px]"
                 />
               </div>
-            )}
+            )} */}
 
             <div className="flex justify-end gap-3">
               <Button 
