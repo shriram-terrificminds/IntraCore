@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import client, { getToken } from '../utils/client';
 
 const CATEGORIES = ['Tech', 'Furniture', 'Stationery', 'Other'];
 const PRIORITIES = ['low', 'medium', 'high'];
@@ -17,6 +18,43 @@ const RequestForm = ({ navigation }: any) => {
   const [description, setDescription] = useState('');
   // Dummy image upload state
   const [images, setImages] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!itemName || !description) {
+      Alert.alert('Error', 'Please fill in all required fields.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const token = await getToken();
+      const body = {
+        title: itemName,
+        description,
+        role_id: "2", // You may want to map this from department/category
+      };
+      const response = await fetch('http://10.0.2.2:8000/api/inventory-requests', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token || ''}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Request submitted successfully.');
+        navigation?.goBack?.();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to submit request.');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to submit request.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -102,8 +140,8 @@ const RequestForm = ({ navigation }: any) => {
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation?.goBack?.()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.submitBtn}>
-          <Text style={styles.submitText}>Submit Request</Text>
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+          <Text style={styles.submitText}>{submitting ? 'Submitting...' : 'Submit Request'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

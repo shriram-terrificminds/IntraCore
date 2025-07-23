@@ -64,10 +64,9 @@ const DashboardScreen = () => {
   }, [token]);
 
   const statCards = [
-    { label: 'My Requests', value: stats?.my_requests ?? 0, icon: <MaterialCommunityIcons name="cube-outline" size={24} color="#3b82f6" /> },
-    { label: 'My Complaints', value: stats?.my_complaints ?? 0, icon: <MaterialIcons name="chat-bubble-outline" size={24} color="#f59e42" /> },
-    { label: 'Pending Requests', value: stats?.pending_requests ?? 0, icon: <MaterialIcons name="access-time" size={24} color="#f59e42" /> },
-    { label: 'Pending Complaints', value: stats?.pending_complaints ?? 0, icon: <MaterialIcons name="error-outline" size={24} color="#ef4444" /> },
+    { label: 'Active Requests', value: stats?.active_requests ?? 0, icon: <MaterialCommunityIcons name="cube-outline" size={24} color="#3b82f6" /> },
+    { label: 'Active Complaints', value: stats?.active_complaints ?? 0, icon: <MaterialIcons name="chat-bubble-outline" size={24} color="#f59e42" /> },
+    { label: 'Total Shipped', value: stats?.total_shipped ?? 0, icon: <MaterialIcons name="local-shipping" size={24} color="#059669" /> },
   ];
 
   return (
