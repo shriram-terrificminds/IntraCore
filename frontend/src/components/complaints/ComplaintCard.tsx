@@ -7,10 +7,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '../../types'; // Import User to get UserRole
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ComplaintCardProps {
   complaint: {
     id: number;
+    complaint_number?: string;
     title: string;
     description: string;
     role: { name: string };
@@ -18,11 +26,11 @@ interface ComplaintCardProps {
     resolution_notes?: string;
     created_at: string;
     resolved_at?: string;
-    user: { name: string };
+    user: { name?: string; first_name?: string; last_name?: string };
     resolvedBy?: { name: string };
     images: Array<{ image_url: string }>;
   };
-  userRole: User['role']; // Corrected type for userRole
+  userRole: string | undefined;
   onStatusUpdate?: (complaintId: number, status: string, notes?: string) => void;
 }
 
@@ -55,7 +63,23 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     }
   };
 
-  const canUpdateStatus = userRole === 'admin' || userRole === 'hr' || userRole === 'devops';
+  // Employee badge color map
+  const employeeStatusStyle = (status: string) => {
+    switch (status) {
+      case 'Pending':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-300';
+      case 'In-progress':
+        return 'bg-orange-50 text-orange-700 border-orange-300';
+      case 'Resolved':
+        return 'bg-green-50 text-green-700 border-green-300';
+      case 'Rejected':
+        return 'bg-red-50 text-red-700 border-red-300';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-300';
+    }
+  };
+
+  const canUpdateStatus = typeof userRole === 'string' && ['admin', 'hr', 'devops'].includes(userRole.toLowerCase());
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
@@ -95,7 +119,7 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
   const getStatusUpdateOptions = () => {
     switch (complaint.resolution_status) {
       case 'Pending':
-        return ['In-progress', 'Resolved', 'Rejected'];
+        return ['In-progress'];
       case 'In-progress':
         return ['Resolved', 'Rejected'];
       default:
@@ -107,31 +131,81 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
     <>
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-semibold text-lg">{complaint.title}</h3>
-                <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
-                  {getStatusIcon(complaint.resolution_status)}
-                  <span className="ml-1">{complaint.resolution_status}</span>
-                </Badge>
-                <Badge variant="outline">{complaint.role.name}</Badge>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              {complaint.complaint_number && (
+                <span className="font-bold text-black text-lg">
+                  #{complaint.complaint_number}
+                </span>
+              )}
+              <h3 className="font-semibold text-lg mt-0">{complaint.title}</h3>
             </div>
-
-            {canUpdateStatus && getStatusUpdateOptions().length > 0 && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setShowStatusDialog(true)}
-              >
-                Update Status
-              </Button>
+            {/* Status Dropdown for admin/hr/devops */}
+            {canUpdateStatus ? (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={newStatus}
+                  onValueChange={value => {
+                    setNewStatus(value);
+                    if (value !== 'Resolved') setResolutionNotes('');
+                    if (onStatusUpdate) onStatusUpdate(complaint.id, value, value === 'Resolved' ? resolutionNotes : undefined);
+                  }}
+                  disabled={isUpdating}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In-progress">In Progress</SelectItem>
+                    <SelectItem value="Resolved">Resolved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : userRole && userRole.toLowerCase() === 'employee' ? (
+              <span className={`inline-block px-3 py-1 rounded-md font-semibold text-xs uppercase tracking-wide border ${employeeStatusStyle(complaint.resolution_status)} shadow-sm`}
+                style={{ minWidth: 90, textAlign: 'center' }}>
+                {complaint.resolution_status}
+              </span>
+            ) : (
+              <Badge className={`${getStatusColor(complaint.resolution_status)} border`}>
+                {getStatusIcon(complaint.resolution_status)}
+                <span className="ml-1">{complaint.resolution_status}</span>
+              </Badge>
             )}
           </div>
-
+          {/* Resolution note input only when status is Resolved and user can update */}
+          {canUpdateStatus && newStatus === 'Resolved' && (
+            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
+              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
+              <div className="flex-1">
+                <label className="block font-semibold mb-1 text-purple-800">Resolution Note</label>
+                <textarea
+                  value={resolutionNotes}
+                  onChange={e => setResolutionNotes(e.target.value)}
+                  className="w-full border rounded p-2 text-purple-800 bg-purple-50 border-purple-200"
+                  placeholder="Add resolution note..."
+                  disabled={isUpdating || newStatus !== 'Resolved'}
+                />
+              </div>
+            </div>
+          )}
+          {/* After resolution, show the note in a lavender/purple box with old style */}
+          {complaint.resolution_status === 'Resolved' && complaint.resolution_notes && (
+            <div className="my-2 p-2 rounded border-l-4 border-purple-400 bg-purple-50 flex items-start gap-2">
+              <MessageSquare className="h-5 w-5 text-purple-400 mt-1" />
+              <div className="flex-1 text-purple-800">
+                <strong>Resolution Note:</strong> {complaint.resolution_notes}
+              </div>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
+          {complaint.resolvedBy && (
+            <p className="text-sm text-muted-foreground mb-2">
+              <strong>Resolved By:</strong> {complaint.resolvedBy.name}
+            </p>
+          )}
           {/* Images Preview */}
           {complaint.images && complaint.images.length > 0 && (
             <div className="mb-4">
@@ -158,23 +232,11 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
               </div>
             </div>
           )}
-
-          {/* Resolution Notes */}
-          {complaint.resolution_notes && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">Resolution Notes</span>
-              </div>
-              <p className="text-sm text-blue-700">{complaint.resolution_notes}</p>
-            </div>
-          )}
-
           {/* Complaint Details */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-4">
             <div>
               <span className="font-medium text-muted-foreground">Reported by:</span>
-              <p className="font-medium">{complaint.user.name}</p>
+              <p className="font-medium">{complaint.user.first_name && complaint.user.last_name ? `${complaint.user.first_name} ${complaint.user.last_name}` : complaint.user.name || 'Unknown'}</p>
             </div>
             <div>
               <span className="font-medium text-muted-foreground">Department:</span>
@@ -182,7 +244,13 @@ export function ComplaintCard({ complaint, userRole, onStatusUpdate }: Complaint
             </div>
             <div>
               <span className="font-medium text-muted-foreground">Created:</span>
-              <p className="font-medium">{new Date(complaint.created_at).toLocaleDateString()}</p>
+              <p className="font-medium">{(() => {
+                const d = new Date(complaint.created_at);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+              })()}</p>
             </div>
             {complaint.resolved_at && (
               <div>

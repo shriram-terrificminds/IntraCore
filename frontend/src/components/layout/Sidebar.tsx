@@ -41,24 +41,24 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
     switch (currentUserRole) {
       case "admin":
-        roleSpecificItems.push(
-          { id: "users", label: "Users", icon: UserIcon },
-          { id: "announcements", label: "Announcements", icon: Settings },
-          { id: "reports", label: "Reports", icon: BarChart3 }
-        );
+      roleSpecificItems.push(
+        { id: "users", label: "Users", icon: UserIcon },
+        { id: "announcements", label: "Announcements", icon: Settings },
+        { id: "reports", label: "Reports", icon: BarChart3 }
+      );
         break;
       case "devops":
       case "hr":
-        roleSpecificItems.push(
-          { id: "announcements", label: "Announcements", icon: Settings },
+      roleSpecificItems.push(
+        { id: "announcements", label: "Announcements", icon: Settings },
           { id: "reports", label: "Reports", icon: BarChart3 } // HR/Devops can see reports in your requirement analysis, so keeping this
-        );
+      );
         break;
       case "employee":
         // Employees only see announcements from the list
-        roleSpecificItems.push(
-          { id: "announcements", label: "Announcements", icon: Settings }
-        );
+      roleSpecificItems.push(
+        { id: "announcements", label: "Announcements", icon: Settings }
+      );
         break;
       default:
         break;
@@ -133,28 +133,11 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           </div>
         </SheetContent> */}
       <aside className="flex flex-col w-64 gap-4 p-4 border-r">
-        <div className="flex flex-col gap-2">
-          <Avatar className="mx-auto">
-            <AvatarImage src={user?.profile_image || "https://github.com/shadcn.png"} alt={`${user?.first_name} ${user?.last_name}`} />
-            <AvatarFallback>
-              {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-center">
-            <p className="font-semibold">{user?.first_name} {user?.last_name}</p>
-            <p className="text-sm text-muted-foreground">
-              {user?.email}
-            </p>
-            <div className="mt-2">
-              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit">
-                <UserIcon className="h-3 w-3" /> Role: {user?.role.name.toUpperCase()}
-              </span>
-              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full flex items-center justify-center mx-auto gap-1 w-fit mt-1">
-                <MapPin className="h-3 w-3" /> {user?.location.name}
-              </span>
-            </div>
-          </div>
+        <img src="/IntraCoreLogo.jpg" alt="IntraCore Logo" className="h-14 w-14 mx-auto mb-2" />
+        <div className="text-center mb-2">
+          <h1 className="text-xl font-semibold" style={{ fontFamily: 'Roboto, sans-serif' }}>IntraCore</h1>
         </div>
+        {/* Removed user card (avatar, name, email, role, location) from sidebar */}
         <div className="flex flex-col gap-1">
           {menuItems.map((item) => (
             <NavLink

@@ -43,6 +43,16 @@ class ComplaintController extends Controller
                 ]);
             }
         }
+        // Notify all users of the assigned role
+        $roleUsers = \App\Models\User::where('role_id', $complaint->role_id)->get();
+        foreach ($roleUsers as $roleUser) {
+            $roleUser->notify(new \App\Notifications\RoleComplaintOrRequestRaised(
+                'complaint',
+                $complaint->title,
+                Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                $roleUser->role->name
+            ));
+        }
 
         return response()->json([
             'message' => 'Complaint submitted successfully.',
@@ -66,53 +76,45 @@ class ComplaintController extends Controller
         if ($userRoleName === RoleEnum::EMPLOYEE->value) {
             $query->where('user_id', $user->id);
         } elseif (in_array($userRoleName, [RoleEnum::HR->value, RoleEnum::DEVOPS->value])) {
-            // HR and Devops can only see complaints for their respective roles OR complaints they have created
             $query->where(function ($q) use ($user) {
                 $q->where('role_id', $user->role_id)
                   ->orWhere('user_id', $user->id);
             });
-        } elseif ($userRoleName === RoleEnum::ADMIN->value) {
-            // Admin can see all, but if they filter by role_id, ensure their own complaints are still visible
-            // This block is primarily to add the orWhere for user_id to Admin's view.
-            // The global filter for Admin is effectively no filter.
-             $query->where(function ($q) use ($user) {
-                $q->orWhere('user_id', $user->id); // Admin should see their own complaints if any
-             });
-        }
+        } // Admin can see all
 
-        // Filters for status and role_id (if not already filtered by role-based access)
-        if ($request->has('resolution_status')) {
+        // Filter by status
+        if ($request->filled('resolution_status') && $request->resolution_status !== 'all') {
             $query->where('resolution_status', $request->resolution_status);
         }
 
-        // If an Admin or HR/DevOps user explicitly requests a specific role_id, allow it.
-        // Otherwise, the role-based filter above will take precedence for HR/DevOps users.
-        if ($request->has('role_id') && $userRoleName === RoleEnum::ADMIN->value) {
-            $query->whereHas('role', function ($q) use ($request) {
-                $q->where('id', $request->role_id);
+        // Filter by role (by name, case-insensitive)
+        if ($request->filled('role') && $request->role !== 'all') {
+            $roleName = $request->role;
+            $query->whereHas('role', function ($q) use ($roleName) {
+                $q->whereRaw('LOWER(name) = ?', [strtolower($roleName)]);
             });
-        } elseif (in_array($userRoleName, [RoleEnum::HR->value, RoleEnum::DEVOPS->value])) {
-             // For HR/DevOps, ensure they can only filter by their own role_id if they provide it
-            if ($request->role_id != $user->role_id) {
-                return response()->json(['message' => 'Unauthorized to filter by this role.'], 403);
-            }
         }
 
         // Search by complaint_number or title
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('complaint_number', 'like', "%$search%")
-                  ->orWhere('title', 'like', "%$search%");
+                  ->orWhere('title', 'like', "%$search%")
+                  ->orWhere('description', 'like', "%$search%")
+                  ;
             });
         }
 
         // Sorting
-        if ($request->has('sort_by') && $request->has('sort_order')) {
+        if ($request->filled('sort_by') && $request->filled('sort_order')) {
             $query->orderBy($request->sort_by, $request->sort_order);
         }
 
-        $complaints = $query->with(['user', 'role', 'resolvedBy', 'images'])->paginate(10);
+        // Pagination
+        $perPage = 10;
+        $page = $request->input('page', 1);
+        $complaints = $query->with(['user', 'role', 'resolvedBy', 'images'])->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json($complaints);
     }
@@ -157,7 +159,7 @@ class ComplaintController extends Controller
             ])],
         ]);
 
-        $currentStatus = $complaint->resolution_status;
+        $currentStatus = $complaint->resolution_status->value;
         $newStatus = $request->resolution_status;
 
         // Enforce status transition rules
@@ -166,6 +168,7 @@ class ComplaintController extends Controller
                 return response()->json(['message' => 'Pending complaints can only be moved to In-progress.'], 400);
             }
         } elseif ($currentStatus === ComplaintStatusEnum::IN_PROGRESS->value) {
+
             if (!in_array($newStatus, [ComplaintStatusEnum::RESOLVED->value, ComplaintStatusEnum::REJECTED->value])) {
                 return response()->json(['message' => 'In-progress complaints can only be moved to Resolved or Rejected.'], 400);
             }
@@ -196,6 +199,14 @@ class ComplaintController extends Controller
 
         $complaint->update($updateData);
 
+        // Notify complaint creator about status update
+        $complaintCreator = $complaint->user;
+        $complaintCreator->notify(new \App\Notifications\StatusUpdatedNotification(
+            'complaint',
+            $complaint->title,
+            $newStatus,
+            Auth::user()->first_name . ' ' . Auth::user()->last_name
+        ));
         return response()->json([
             'message' => 'Complaint status updated successfully.',
             'complaint' => $complaint->load(['user', 'role', 'resolvedBy', 'images'])

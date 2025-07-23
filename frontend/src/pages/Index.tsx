@@ -14,24 +14,23 @@ import { useAuth } from '@/contexts/AuthContext';
 const Index = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userRole, setUserRole] = useState<any>(user?.role?.name ? { name: user.role.name.toLowerCase() } : { name: 'admin' }); // Always object
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard userRole={userRole} />;
+        return <Dashboard userRole={user?.role} />;
       case 'inventory':
-        return <InventoryRequests userRole={userRole} />;
+        return <InventoryRequests userRole={user?.role} />;
       case 'complaints':
-        return <ComplaintManagement userRole={userRole} />;
+        return <ComplaintManagement userRole={user?.role} />;
       case 'announcements':
-        return <Announcements userRole={userRole} />;
+        return <Announcements userRole={user?.role} />;
       case 'users':
-        return <UserManagement userRole={userRole} />;
+        return <UserManagement userRole={user?.role} />;
       case 'reports':
-        return <Reports userRole={userRole} />;
+        return <Reports userRole={user?.role} />;
       default:
-        return <Dashboard userRole={userRole} />;
+        return <Dashboard userRole={user?.role} />;
     }
   };
 
