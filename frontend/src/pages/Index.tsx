@@ -18,19 +18,19 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard userRole={user?.role} />;
+        return <Dashboard userRole={user?.role?.name?.toLowerCase()} />;
       case 'inventory':
-        return <InventoryRequests userRole={user?.role} />;
+        return <InventoryRequests userRole={user?.role?.name?.toLowerCase()} />;
       case 'complaints':
-        return <ComplaintManagement userRole={user?.role} />;
+        return <ComplaintManagement userRole={user?.role?.name?.toLowerCase()} />;
       case 'announcements':
-        return <Announcements userRole={user?.role} />;
+        return <Announcements userRole={user?.role?.name?.toLowerCase()} />;
       case 'users':
-        return <UserManagement userRole={user?.role} />;
+        return <UserManagement userRole={user?.role?.name?.toLowerCase()} />;
       case 'reports':
-        return <Reports userRole={user?.role} />;
+        return <Reports userRole={user?.role?.name?.toLowerCase()} />;
       default:
-        return <Dashboard userRole={user?.role} />;
+        return <Dashboard userRole={user?.role?.name?.toLowerCase()} />;
     }
   };
 
