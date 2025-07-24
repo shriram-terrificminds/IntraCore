@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
@@ -14,7 +15,17 @@ import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const initialTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Keep tab in sync with URL
+  useEffect(() => {
+    if (activeTab !== searchParams.get('tab')) {
+      setSearchParams({ tab: activeTab });
+    }
+  }, [activeTab, setSearchParams, searchParams]);
 
   if (loading) {
     return (
