@@ -62,6 +62,18 @@ export function Reports({ userRole, userLocation, assignedLocations = [] }: Repo
     fetchLocations();
   }, [userRole, assignedLocations, userLocation]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [reportType, roleFilter, locationFilter, startDate, endDate]);
+
+  // Ensure current page never exceeds totalPages
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages]);
+
   // Fetch report data
   useEffect(() => {
     const fetchData = async () => {
@@ -221,7 +233,7 @@ export function Reports({ userRole, userLocation, assignedLocations = [] }: Repo
                 <tbody>
                   {data.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-4">No data found.</td>
+                      <td colSpan={8} className="text-center py-4 text-muted-foreground">No report data found for the selected filters.</td>
                     </tr>
                   ) : (
                     data.map((row, idx) => (

@@ -138,6 +138,18 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
     fetchFilteredComplaints();
   }, [statusFilter, roleFilter, page, debouncedSearchTerm, sortOrder]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, roleFilter, sortOrder]);
+
+  // Ensure current page never exceeds totalPages
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages]);
+
   const handleStatusUpdate = async (complaintId: number, status: string, notes?: string) => {
     setLoading(true);
     try {
@@ -328,11 +340,7 @@ export function ComplaintManagement({ userRole }: ComplaintManagementProps) {
       {/* Complaints List */}
       <div className="space-y-4">
         {filteredComplaints.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">No complaints found matching your criteria.</p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-4 text-muted-foreground">No complaints found for the selected filters.</div>
         ) : (
           filteredComplaints.map((complaint) => (
             <ComplaintCard
