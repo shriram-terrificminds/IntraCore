@@ -36,8 +36,12 @@ class UserManagementController extends Controller
             $query->where('location_id', $locationId);
         }
 
-        $users = $query->paginate($request->input('per_page', 15));
-        return response()->json($users->load('role', 'location'));
+
+        // Pagination
+        $perPage = 10;
+        $page = $request->input('page', 1);
+        $users = $query->with(['role', 'location'])->paginate($perPage, ['*'], 'page', $page);
+        return response()->json($users);
     }
 
     // Get user details
