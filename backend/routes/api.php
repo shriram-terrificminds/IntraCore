@@ -5,6 +5,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryRequestController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/dashboard/stats', [DashboardController::class, 'stats']);
@@ -45,3 +46,6 @@ Route::middleware(['auth:sanctum', 'check.admin'])->prefix('users')->group(funct
 
 // Update OneSignal player_id for the authenticated user
 Route::middleware('auth:sanctum')->post('/users/player-id', [\App\Http\Controllers\UserManagementController::class, 'updatePlayerId']);
+
+Route::middleware('auth:sanctum')->post('/reports', [ReportController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/reports/locations', [ReportController::class, 'locations']);

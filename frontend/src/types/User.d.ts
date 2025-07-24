@@ -1,6 +1,6 @@
-declare type UserRole = 'admin' | 'employee' | 'devops' | 'hr' | 'member';
+export type UserRole = 'admin' | 'employee' | 'devops' | 'hr' | 'member';
 
-declare interface User {
+export interface User {
   id: string;
   first_name: string;
   last_name: string;
