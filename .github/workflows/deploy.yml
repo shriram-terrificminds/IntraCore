@@ -55,13 +55,13 @@ jobs:
               rm -rf ~/app/*
             fi
             mkdir -p ~/app
-      - name: Copy repo files to EC2 ~/app
+      - name: Copy backend, frontend, and docker compose files to EC2 ~/app
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: ./*
+          source: backend frontend docker-compose.yml docker-compose.override.yml
           target: ~/app
           strip_components: 1
 
