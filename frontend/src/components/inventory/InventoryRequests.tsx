@@ -85,6 +85,18 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const { toast } = useToast();
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, roleFilter]);
+
+  // Ensure current page never exceeds totalPages
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages]);
+
   useEffect(() => {
     const fetchRequests = async () => {
     setLoading(true);
@@ -272,9 +284,9 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                 </TableHeader>
                 <TableBody>
                   {requests.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground">No requests found.</TableCell>
-                    </TableRow>
+                    <tr>
+                      <td colSpan={8} className="text-center py-4 text-muted-foreground">No requests found for the selected filters.</td>
+                    </tr>
                   ) : (
                     requests.map(request => {
                       // Determine allowed status transitions
@@ -347,7 +359,7 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
               </Table>
               <div className="flex justify-center mt-4 gap-2">
                 <Button size="sm" variant="outline" onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
-                <span className="px-2 py-1">Page {page} of {totalPages}</span>
+                <span className="px-2 py-1 text-sm">Page {page} of {totalPages}</span>
                 <Button size="sm" variant="outline" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
               </div>
             </>
