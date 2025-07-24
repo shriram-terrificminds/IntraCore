@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
@@ -10,10 +11,29 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Reports } from '@/components/reports/Reports';
 import { AuthPage } from '@/components/auth/AuthPage';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { user, loading } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const initialTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Keep tab in sync with URL
+  useEffect(() => {
+    if (activeTab !== searchParams.get('tab')) {
+      setSearchParams({ tab: activeTab });
+    }
+  }, [activeTab, setSearchParams, searchParams]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="animate-spin h-10 w-10 text-primary" />
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
