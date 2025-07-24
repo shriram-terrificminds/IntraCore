@@ -4,7 +4,7 @@ IntraCore is a comprehensive office management system designed to streamline ope
 
 ## Features
 
-- User Authentication with Role Management (Admin/Team Member)
+- User Authentication with Role Management
 - Inventory Request Management
 - Complaint Tracking System
 - Internal Broadcasts
@@ -36,14 +36,12 @@ IntraCore is a comprehensive office management system designed to streamline ope
 IntraCore/
 ├── frontend/          # React + TypeScript frontend
 ├── backend/           # Laravel backend
+|── mobile/            # React native mobile
 ```
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js 18+ (for local development)
-- PHP 8.2+ (for local development)
-- Composer (for local development)
 
 ## Getting Started
 
@@ -53,63 +51,38 @@ IntraCore/
    cd IntraCore
    ```
 
-2. Copy environment files:
+2. Start Docker services:
    ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
+   docker compose up --build
    ```
 
-3. Start Docker services:
+3. Install backend dependencies:
    ```bash
-   docker-compose up --build -d
+   docker compose exec backend composer install
+   docker compose exec backend php artisan migrate
+   docker compose exec backend php artisan migrate:fresh --seed # Optional - to reset tables once again
    ```
 
-4. Install backend dependencies:
-   ```bash
-   docker-compose exec backend composer install
-   docker-compose exec backend php artisan migrate
-   ```
-
-5. Access the application:
+4. Access the application:
    - Frontend: http://localhost:8050
-   - Backend API: http://localhost:8000
-
-## Development
-
-### Frontend Development
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### Backend Development
-```bash
-cd backend
-composer install
-php artisan serve
-```
+   - Backend: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs/api
+   - Mailhog (Email Viewer): http://localhost:8025
 
 ## Testing
 
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
+### Backend linting check
 
-### Backend Tests
-```bash
-cd backend
-php artisan test
+```shell
+docker compose run --rm backend /bin/bash -c "vendor/bin/phpcs app config database routes tests && vendor/bin/phpmd app ansi rulesets.xml && vendor/bin/phpstan analyse app"
 ```
 
 ## Contributing
 
-1. Create a feature branch
+1. Create a feature OR bugfix branch from `development`
 2. Commit your changes
 3. Push to the branch
-4. Create a Pull Request
+4. Create a Pull Request to `development`
 
 ## License
 

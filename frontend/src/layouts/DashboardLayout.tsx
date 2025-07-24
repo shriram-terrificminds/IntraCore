@@ -11,17 +11,19 @@ import {
   MegaphoneIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import type { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Inventory Requests', href: '/inventory-requests', icon: InboxIcon },
-  { name: 'Complaints', href: '/complaints', icon: ChatBubbleLeftRightIcon },
-  { name: 'Broadcasts', href: '/broadcasts', icon: MegaphoneIcon },
-  { name: 'Reports', href: '/reports', icon: ChartBarIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, roles: ['admin', 'devops', 'hr', 'employee'] },
+  { name: 'Inventory Requests', href: '/inventory-requests', icon: InboxIcon, roles: ['admin', 'devops', 'hr', 'employee'] },
+  { name: 'Complaints', href: '/complaints', icon: ChatBubbleLeftRightIcon, roles: ['admin', 'devops', 'hr', 'employee'] },
+  { name: 'Broadcasts', href: '/broadcasts', icon: MegaphoneIcon, roles: ['admin', 'devops', 'hr'] },
+  { name: 'Reports', href: '/reports', icon: ChartBarIcon, roles: ['admin'] },
+  { name: 'User Management', href: '/users', icon: UsersIcon, roles: ['admin']},
+  { name: 'Configurations', href: '/configurations', icon: Cog6ToothIcon, roles: ['admin'] },
 ];
 
 interface DashboardLayoutProps {
@@ -42,6 +44,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       console.error('Logout error:', error);
     }
   };
+
+  const filteredNavigation = navigation.filter(item => 
+    item.roles.includes(user?.role?.name.toLowerCase() || '')
+  );
 
   return (
     <div>
@@ -82,7 +88,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
                         <ul role="list" className="-mx-2 space-y-1">
-                          {navigation.map((item) => (
+                          {filteredNavigation.map((item) => (
                             <li key={item.name}>
                               <Link
                                 to={item.href}
@@ -132,7 +138,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-1">
-                  {navigation.map((item) => (
+                  {filteredNavigation.map((item) => (
                     <li key={item.name}>
                       <Link
                         to={item.href}
@@ -191,7 +197,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Menu.Button className="-m-1.5 flex items-center p-1.5">
                   <span className="sr-only">Open user menu</span>
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white">
-                    {user?.name.charAt(0)}
+                    {user?.first_name?.charAt(0)}
                   </span>
                 </Menu.Button>
                 <Transition

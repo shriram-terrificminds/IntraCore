@@ -23,4 +23,4 @@ class ComplaintImage extends Model
     {
         return $this->belongsTo(Complaint::class);
     }
-} 
+}

@@ -6,6 +6,7 @@ import { authService } from '../services/auth';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean;
   login: (email: string, password: string, remember: boolean) => Promise<void>;
   register: (
     name: string,
@@ -15,6 +16,8 @@ interface AuthContextType {
     location: string
   ) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<boolean>;
+  resetPassword: (token: string, email: string, password: string, password_confirmation: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -42,8 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, remember: boolean) => {
-    const response = await authService.login(email, password, remember);
-    setUser(response.user);
+    setIsLoading(true);
+    try {
+      const response = await authService.login(email, password, remember);
+      setUser(response.user);
+    } catch (error: any) {
+      // Rethrow error so LoginForm can handle and display it
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const register = async (
@@ -68,14 +80,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      await authService.forgotPassword(email);
+      return true;
+    } catch (error) {
+      console.error('Forgot password failed:', error);
+      return false;
+    }
+  };
+
+  const resetPassword = async (token: string, email: string, password: string, password_confirmation: string) => {
+    try {
+      await authService.resetPassword(token, email, password, password_confirmation);
+      return true;
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        isLoading,
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}
@@ -89,4 +124,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

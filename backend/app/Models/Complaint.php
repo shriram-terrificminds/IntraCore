@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ComplaintStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,8 @@ class Complaint extends Model
     protected $fillable = [
         'user_id',
         'role_id',
+        'complaint_number',
+        'title',
         'description',
         'resolution_notes',
         'resolution_status',
@@ -21,8 +24,9 @@ class Complaint extends Model
         'resolved_at'
     ];
 
-    protected $dates = [
-        'resolved_at'
+    protected $casts = [
+        'resolved_at' => 'datetime',
+        'resolution_status' => ComplaintStatusEnum::class,
     ];
 
     public function user(): BelongsTo
@@ -44,4 +48,4 @@ class Complaint extends Model
     {
         return $this->hasMany(ComplaintImage::class);
     }
-} 
+}

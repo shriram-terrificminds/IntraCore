@@ -8,7 +8,7 @@ services:
     ports:
       - "8050:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://localhost:8000/api
     depends_on:
       - backend
 
@@ -22,6 +22,7 @@ services:
     ports:
       - "8000:80"
     environment:
+      - APP_NAME=IntraCore
       - APP_ENV=local
       - APP_KEY="base64:PX2orSE2KW6rqy5wZKx3cJJBCzH6LVhgEjHc2lXgMAU="
       - APP_DEBUG=true
@@ -32,12 +33,24 @@ services:
       - DB_DATABASE=intracore
       - DB_USERNAME=intracore
       - DB_PASSWORD=secret
+      - FRONTEND_URL=http://localhost:8050
       - REDIS_HOST=redis
+      # Mail Configuration
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+      - MAIL_FROM_ADDRESS=noreply@intracore.com
+      - MAIL_FROM_NAME=IntraCore
+      - ONESIGNAL_APP_ID=8f98d172-c3be-458b-b393-77fe637539ed
+      - ONESIGNAL_REST_API_KEY=os_v2_app_r6mnc4wdxzcyxm4to77gg5jz5vwmp3aubtfebyvramo25rjfakmrvw4aifikwxs3damz5ry7lltyg74cqp3mnjref5nrbm3cphyizxa
+      - ONESIGNAL_REST_API_URL=https://api.onesignal.com
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - db
+      - redis     
+      - mailhog
 
   db:
     image: mysql:8.0
@@ -62,6 +75,12 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
+  
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP server
 
 volumes:
   mysql_data:

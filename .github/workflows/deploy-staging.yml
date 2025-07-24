@@ -1,0 +1,33 @@
+name: Backend Lint Checks
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSER_ALLOW_SUPERUSER: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, curl, mysql
+          coverage: none
+
+      - name: Install and run all linters
+        run: |
+          cd backend
+          composer install --no-interaction --prefer-dist
+          ./vendor/bin/phpcs app config database routes tests
+          ./vendor/bin/phpstan analyse app
+          ./vendor/bin/phpmd app ansi rulesets.xml

@@ -4,55 +4,49 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Berkayk\OneSignal\OneSignalFacade as OneSignal;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password as PasswordRules;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @SuppressWarnings("CouplingBetweenObjects")
+ */
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
-    {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'location' => ['required', 'string', 'max:255'],
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'location' => $request->location,
-        ]);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
-    }
-
     public function login(Request $request): JsonResponse
     {
         $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'remember' => ['boolean'],
+            'remember_me' => ['boolean'],
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'), $request->remember)) {
+        if (!Auth::attempt($request->only('email', 'password'), $request->remember_me)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::with(['role', 'location'])
+            ->where('email', $request->email)
+            ->firstOrFail();
+
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Send test notification on login
+        if ($user->player_id) {
+            OneSignal::sendNotificationToUser(
+                'Welcome! You have successfully logged in.',
+                '7a20042e-269c-4da0-960e-fa46e39e3e2d'
+            );
+        }
 
         return response()->json([
             'user' => $user,
@@ -62,7 +56,16 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user?->currentAccessToken()?->delete();
+
+        // Send test notification on logout
+        if ($user && $user->player_id) {
+            OneSignal::sendNotificationToUser(
+                'You have successfully logged out.',
+                '7a20042e-269c-4da0-960e-fa46e39e3e2d'
+            );
+        }
 
         return response()->json(['message' => 'Successfully logged out']);
     }
@@ -70,7 +73,7 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         return response()->json([
-            'data' => $request->user(),
+            'data' => $request->user()->load(['role', 'location']),
         ]);
     }
 
@@ -80,11 +83,22 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // TODO: Implement password reset email functionality
+        $user = User::where('email', $request->email)->first();
 
-        return response()->json([
-            'message' => 'Password reset link sent to your email',
-        ]);
+        if (!$user) {
+            // Return success even if user not found to prevent email enumeration
+            return response()->json(['message' => 'If an account with that email address exists, a password reset link has been sent.']);
+        }
+
+        // Generate a new token and send the reset link
+        $token = Password::getRepository()->create($user);
+
+        // Customize the notification to send the frontend URL
+        // Send notification for successful password reset
+        $user->notify(new \App\Notifications\ResetPasswordNotification($token));
+        // $user->sendPasswordResetNotification($token);
+
+        return response()->json(['message' => 'Password reset link sent successfully.']);
     }
 
     public function resetPassword(Request $request): JsonResponse
@@ -92,13 +106,34 @@ class AuthController extends Controller
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', PasswordRules::defaults()],
         ]);
 
-        // TODO: Implement password reset functionality
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
 
-        return response()->json([
-            'message' => 'Password has been reset',
-        ]);
+                event(new PasswordReset($user));
+
+                // Send notification for successful password reset
+                $user->notify(new \App\Notifications\PasswordSuccessfullyReset());
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            $message = __($status);
+            if ($status === Password::INVALID_TOKEN) {
+                return response()->json(['message' => 'The password reset token is invalid or expired.'], 400);
+            } elseif ($status === Password::INVALID_USER) {
+                return response()->json(['message' => 'We could not find a user with that email address.'], 400);
+            }
+            return response()->json(['message' => $message], 400);
+        }
+
+        return response()->json(['message' => __($status)]);
     }
 }

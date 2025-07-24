@@ -28,4 +28,4 @@ class LocationSeeder extends Seeder
             Location::create($location);
         }
     }
-} 
+}
