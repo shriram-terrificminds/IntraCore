@@ -10,10 +10,19 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Reports } from '@/components/reports/Reports';
 import { AuthPage } from '@/components/auth/AuthPage';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="animate-spin h-10 w-10 text-primary" />
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
