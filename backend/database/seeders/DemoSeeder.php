@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\InventoryRequest;
 use App\Models\Complaint;
-use App\Models\Role;
+use App\Models\InventoryRequest;
 use App\Models\Location;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DemoSeeder extends Seeder
