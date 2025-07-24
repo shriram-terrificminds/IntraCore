@@ -25,7 +25,7 @@ const ComplaintsStack = createNativeStackNavigator<RootStackParamList>();
 
 function RequestsStackScreen() {
   return (
-    <RequestsStack.Navigator>
+    <RequestsStack.Navigator screenOptions={{ headerShown: false }}>
       <RequestsStack.Screen name="RequestsList" component={RequestsList} options={{ title: 'Requests' }} />
       <RequestsStack.Screen name="RequestForm"   component={RequestForm}   options={{ title: 'New Request' }} />
       <RequestsStack.Screen name="RequestDetail" component={RequestDetail} options={{ title: 'Request Detail' }} />
@@ -35,7 +35,7 @@ function RequestsStackScreen() {
 
 function ComplaintsStackScreen() {
   return (
-    <ComplaintsStack.Navigator>
+    <ComplaintsStack.Navigator screenOptions={{ headerShown: false }}>
       <ComplaintsStack.Screen name="ComplaintsList"   component={ComplaintsList}   options={{ title: 'Complaints' }} />
       <ComplaintsStack.Screen name="ComplaintForm"    component={ComplaintForm}    options={{ title: 'New Complaint' }} />
       <ComplaintsStack.Screen name="ComplaintDetail"  component={ComplaintDetail}  options={{ title: 'Complaint Detail' }} />
@@ -61,7 +61,7 @@ export default function Navigation() {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          headerRight: () => <Button title="Logout" onPress={() => signOut()} color="#d00" />, 
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <MaterialIcons name="dashboard" color={color} size={size} />,
         }}
       />

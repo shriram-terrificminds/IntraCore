@@ -1,49 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import client from '../utils/client';
 
 const FILTERS = ['All Requests', 'Pending', 'Approved', 'Delivered'];
-
-const MOCK_REQUESTS = [
-  {
-    id: '1',
-    title: 'Wireless Mouse',
-    status: 'Pending',
-    priority: 'medium',
-    location: 'Headquarters',
-    description: 'Current mouse is not working properly',
-    requestedBy: 'John Doe',
-    department: 'DevOps',
-    category: 'Tech',
-    date: '2024-01-15',
-  },
-  {
-    id: '2',
-    title: 'Office Chair',
-    status: 'Approved',
-    priority: 'high',
-    location: 'North Branch',
-    description: 'Ergonomic chair needed for back support',
-    requestedBy: 'Sarah Smith',
-    department: 'HR',
-    category: 'Furniture',
-    date: '2024-01-14',
-  },
-  {
-    id: '3',
-    title: 'HDMI Cable',
-    status: 'Delivered',
-    priority: 'low',
-    location: 'South Branch',
-    description: 'For presentation setup',
-    requestedBy: 'Bob Lee',
-    department: 'Tech',
-    category: 'Tech',
-    date: '2024-01-13',
-  },
-];
 
 const statusStyles = {
   Pending: { color: '#b59f00', bg: '#fef9c3', icon: 'access-time' },
@@ -53,12 +15,32 @@ const statusStyles = {
 
 const RequestsList = () => {
   const [filter, setFilter] = useState('All Requests');
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  const filtered =
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchRequests = async () => {
+        setLoading(true);
+        try {
+          const data = await client.post('/inventory-requests/list', { search: '' });
+          setRequests(data.data || []);
+        } catch (err) {
+          console.error('Failed to fetch requests:', err);
+          setRequests([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchRequests();
+    }, [])
+  );
+
+  const filtered: any[] =
     filter === 'All Requests'
-      ? MOCK_REQUESTS
-      : MOCK_REQUESTS.filter(r => r.status === filter);
+      ? requests
+      : requests.filter(r => r.status === filter);
 
   return (
     <ScrollView style={{ backgroundColor: '#fff' }}>
@@ -67,7 +49,7 @@ const RequestsList = () => {
           <Text style={styles.heading}>Inventory Requests</Text>
           <Text style={styles.subtitle}>Manage office equipment and supply requests</Text>
         </View>
-        <TouchableOpacity style={styles.newRequestBtn} onPress={() => navigation.navigate('RequestForm')}>
+        <TouchableOpacity style={styles.newRequestBtn} onPress={() => (navigation as any).navigate('RequestForm')}>
           <MaterialIcons name="add" size={22} color="#fff" />
           <Text style={styles.newRequestText}>New Request</Text>
         </TouchableOpacity>
@@ -83,47 +65,52 @@ const RequestsList = () => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <FlatList
-        data={filtered}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          const status = statusStyles[item.status];
-          return (
-            <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: status.bg }]}> 
-                  <MaterialIcons name={status.icon} size={16} color={status.color} style={{ marginRight: 2 }} />
-                  <Text style={{ color: status.color, fontWeight: 'bold', fontSize: 13 }}>{item.status}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 32 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }: { item: any }) => {
+            const status = statusStyles[item.status as keyof typeof statusStyles];
+            return (
+              <TouchableOpacity onPress={() => (navigation as any).navigate('RequestDetail', { id: item.id })} activeOpacity={0.85} style={styles.card}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: status?.bg }]}> 
+                    <MaterialIcons name={status?.icon} size={16} color={status?.color} style={{ marginRight: 2 }} />
+                    <Text style={{ color: status?.color, fontWeight: 'bold', fontSize: 13 }}>{item.status}</Text>
+                  </View>
+                  <View style={styles.priorityBadge}><Text style={styles.priorityText}>{item.priority || '-'}</Text></View>
+                  <View style={styles.locationBadge}>
+                    <MaterialIcons name="location-on" size={15} color="#64748b" style={{ marginRight: 2 }} />
+                    <Text style={styles.locationText}>{item.location || '-'}</Text>
+                  </View>
                 </View>
-                <View style={styles.priorityBadge}><Text style={styles.priorityText}>{item.priority}</Text></View>
-                <View style={styles.locationBadge}>
-                  <MaterialIcons name="location-on" size={15} color="#64748b" style={{ marginRight: 2 }} />
-                  <Text style={styles.locationText}>{item.location}</Text>
+                <Text style={styles.cardDesc}>{item.description}</Text>
+                <View style={styles.cardDetailsRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardDetailsLabel}>Requested by:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.requestedBy || '-'}</Text>
+                    <Text style={styles.cardDetailsLabel}>Category:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.category || '-'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardDetailsLabel}>Department:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.department || '-'}</Text>
+                    <Text style={styles.cardDetailsLabel}>Date:</Text>
+                    <Text style={styles.cardDetailsValue}>{item.date || '-'}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.cardDesc}>{item.description}</Text>
-              <View style={styles.cardDetailsRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardDetailsLabel}>Requested by:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.requestedBy}</Text>
-                  <Text style={styles.cardDetailsLabel}>Category:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.category}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardDetailsLabel}>Department:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.department}</Text>
-                  <Text style={styles.cardDetailsLabel}>Date:</Text>
-                  <Text style={styles.cardDetailsValue}>{item.date}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        }}
-        contentContainerStyle={{ paddingBottom: 32 }}
-        style={{ marginTop: 8 }}
-        scrollEnabled={false}
-      />
+              </TouchableOpacity>
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: 32 }}
+          style={{ marginTop: 8 }}
+          scrollEnabled={false}
+          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 32, color: '#64748b' }}>No requests found.</Text>}
+        />
+      )}
     </ScrollView>
   );
 };

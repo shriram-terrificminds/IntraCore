@@ -118,4 +118,24 @@ export const updateInventoryRequestStatus = async (id, status) => {
   }
 };
 
+export const getReportData = async (filters = {}) => {
+  try {
+    const res = await api.post('/reports', filters);
+    return res.data;
+  } catch (error) {
+    console.error('Failed to fetch report data:', error);
+    return { data: [], total: 0, page: 1, per_page: 20 };
+  }
+};
+
+export const getReportLocations = async () => {
+  try {
+    const res = await api.get('/reports/locations');
+    return res.data.locations || [];
+  } catch (error) {
+    console.error('Failed to fetch report locations:', error);
+    return [];
+  }
+};
+
 export default api;
