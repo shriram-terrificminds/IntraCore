@@ -75,6 +75,6 @@ jobs:
             cd ~/app
             docker compose down -v --remove-orphans
             docker compose up --build -d
-            docker compose exec backend /bin/bash -c 'php artisan migrate:fresh && php artisan db:seed --class=Database\Seeders\DemoSeeder'
+            docker compose exec backend /bin/bash -c 'composer install && php artisan migrate:fresh && php artisan db:seed --class=Database\Seeders\DemoSeeder'
             docker compose exec backend /bin/bash -c 'php artisan optimize:clear && php artisan optimize'
             echo "Deployment completed successfully."
