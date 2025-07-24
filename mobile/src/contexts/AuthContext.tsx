@@ -1,7 +1,7 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import client from '../utils/client';
+import client, { API_BASE_URL } from '../utils/client';
 
 interface UserType {
   email: string;
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (username: string, password: string, remember = false, onLogin?: () => void, playerId?: string) => {
     setLoading(true);
     try {
-      const url = 'http://10.0.2.2:8000/api/auth/login';
+      const url = `${API_BASE_URL}/auth/login`;
       const body = {
         email: username,
         password,

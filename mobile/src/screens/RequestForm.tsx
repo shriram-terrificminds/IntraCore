@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import client, { getToken } from '../utils/client';
+import client, { getToken, API_BASE_URL } from '../utils/client';
 
 const CATEGORIES = ['Tech', 'Furniture', 'Stationery', 'Other'];
 const PRIORITIES = ['low', 'medium', 'high'];
@@ -33,7 +33,7 @@ const RequestForm = ({ navigation }: any) => {
         description,
         role_id: "2", // You may want to map this from department/category
       };
-      const response = await fetch('http://10.0.2.2:8000/api/inventory-requests', {
+      const response = await fetch(`${API_BASE_URL}/inventory-requests`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token || ''}`,

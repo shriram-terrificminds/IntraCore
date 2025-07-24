@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import client, { getToken } from '../utils/client';
+import client, { getToken, API_BASE_URL } from '../utils/client';
 
 const CATEGORIES = ['Pantry', 'Tech', 'HR', 'Admin'];
 const PRIORITIES = ['low', 'medium', 'high'];
@@ -41,7 +41,7 @@ const ComplaintForm = ({ navigation }: any) => {
       // You can add more fields as needed
       const token = await getToken();
       console.log('[ComplaintForm] Submitting complaint:', { title, description, role_id: categoryToRoleId[category] || '2' });
-      const response = await fetch('http://10.0.2.2:8000/api/complaints', {
+      const response = await fetch(`${API_BASE_URL}/complaints`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token || ''}`,

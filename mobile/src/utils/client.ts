@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.0.2.2:8000/api';
+export const API_BASE_URL = 'https://apparent-noted-panther.ngrok-free.app/api';
+
+const BASE_URL = API_BASE_URL;
 
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 

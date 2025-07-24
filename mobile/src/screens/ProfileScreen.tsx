@@ -69,8 +69,8 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  bgContainer: { flex: 1, backgroundColor: '#e0e7ff' },
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  bgContainer: { flex: 1, backgroundColor: '#ffffff' },
+  container: { flex: 1, alignItems: 'flex-start', justifyContent: 'flex-start', padding: 24 },
   profileCard: { backgroundColor: '#fff', borderRadius: 20, padding: 28, alignItems: 'center', width: '100%', maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 36 },
   avatarShadow: { shadowColor: '#2563eb', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, marginBottom: 18 },
   avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },

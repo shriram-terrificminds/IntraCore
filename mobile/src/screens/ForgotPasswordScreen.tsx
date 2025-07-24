@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from '../utils/client';
 
 const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -14,7 +15,7 @@ const ForgotPasswordScreen: React.FC = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://10.0.2.2:8000/api/auth/forgot-password', {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

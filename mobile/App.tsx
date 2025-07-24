@@ -50,7 +50,7 @@ const AppWithOneSignal: React.FC = () => {
     // 4) Listen for subscription changes (to grab your Player ID)  
     OneSignal.addSubscriptionObserver(event => {
       if (event.to.isSubscribed && event.to.userId) {
-        Alert.alert('OneSignal Player ID', event.to.userId);
+        // Alert.alert('OneSignal Player ID', event.to.userId);
       }
     });
   }, [token]);
