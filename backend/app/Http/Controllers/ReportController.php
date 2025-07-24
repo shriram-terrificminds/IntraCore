@@ -4,21 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Complaint;
 use App\Models\InventoryRequest;
-use App\Models\Role;
-use App\Models\Location;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
 
 class ReportController extends Controller
 {
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $role = strtolower($user->role->name);
-        $locationId = $user->location_id;
-
         // Filters
         $type = $request->input('type', 'all'); // inventory, complaints, all
         $roleFilter = $request->input('role');
@@ -30,7 +26,6 @@ class ReportController extends Controller
 
         $results = collect();
 
-        // Date range
         $dateFrom = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $dateTo = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
@@ -53,7 +48,7 @@ class ReportController extends Controller
         if ($type === 'complaints' || $type === 'all') {
             $complaints = Complaint::with(['user.location', 'role'])
                 ->when($roleFilter, fn($q) => $q->whereHas('role', fn($qr) => $qr->where('name', $roleFilter)))
-                ->when($locationFilterValue, fn($q) => $q->whereHas('user.location', function($qu) use ($locationFilterValue) {
+                ->when($locationFilterValue, fn($q) => $q->whereHas('user.location', function ($qu) use ($locationFilterValue) {
                     $qu->whereRaw('LOWER(name) = ?', [strtolower($locationFilterValue)])
                        ->orWhereRaw('LOWER(name) = ?', [strtolower(array_search($locationFilterValue, [
                            'Trivandrum' => 'TVM',
@@ -85,7 +80,7 @@ class ReportController extends Controller
         if ($type === 'inventory' || $type === 'all') {
             $requests = InventoryRequest::with(['user.location', 'role'])
                 ->when($roleFilter, fn($q) => $q->whereHas('role', fn($qr) => $qr->where('name', $roleFilter)))
-                ->when($locationFilterValue, fn($q) => $q->whereHas('user.location', function($qu) use ($locationFilterValue) {
+                ->when($locationFilterValue, fn($q) => $q->whereHas('user.location', function ($qu) use ($locationFilterValue) {
                     $qu->whereRaw('LOWER(name) = ?', [strtolower($locationFilterValue)])
                        ->orWhereRaw('LOWER(name) = ?', [strtolower(array_search($locationFilterValue, [
                            'Trivandrum' => 'TVM',
@@ -146,4 +141,4 @@ class ReportController extends Controller
         $displayNames = $locationNames->map(fn($name) => $displayMap[$name] ?? $name)->unique()->values();
         return response()->json(['locations' => $displayNames]);
     }
-} 
+}

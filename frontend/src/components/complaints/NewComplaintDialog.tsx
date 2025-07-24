@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import { Upload, X, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Complaint } from '@/types/Complaint';
 
 interface NewComplaintDialogProps {
@@ -41,10 +39,8 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
     images: [] as File[],
   });
 
-  const [images, setImages] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
   const validateForm = () => {
@@ -62,57 +58,8 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
       newErrors.description = 'Description is required';
     }
 
-    if (images.length > 5) {
-      newErrors.images = 'Maximum 5 images allowed';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      const totalImages = images.length + newFiles.length;
-      
-      if (totalImages > 5) {
-        toast({
-          title: 'Too many images',
-          description: 'Maximum 5 images allowed',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Validate file types and sizes
-      const validFiles = newFiles.filter(file => {
-        if (!file.type.startsWith('image/')) {
-          toast({
-            title: 'Invalid file type',
-            description: `${file.name} is not an image file`,
-            variant: 'destructive',
-          });
-          return false;
-        }
-
-        if (file.size > 5 * 1024 * 1024) { // 5MB
-          toast({
-            title: 'File too large',
-            description: `${file.name} is larger than 5MB`,
-            variant: 'destructive',
-          });
-          return false;
-        }
-
-        return true;
-      });
-
-      setImages([...images, ...validFiles]);
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +83,6 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
         resolution_status: 'Pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        images: images.map(file => ({ image_url: URL.createObjectURL(file) })), // Store as array of objects
       };
       onSubmit(newComplaint);
       toast({
@@ -150,7 +96,6 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
         description: '',
         images: [],
       });
-      setImages([]);
     } catch (error) {
       toast({
         title: 'Submission Failed',
@@ -229,64 +174,6 @@ export function NewComplaintDialog({ open, onOpenChange, onSubmit }: NewComplain
           </div>
 
           <div>
-            <Label>Supporting Images (Optional)</Label>
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                images.length >= 5 
-                  ? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
-                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }`}
-              onClick={() => images.length < 5 && fileInputRef.current?.click()}
-            >
-              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500 mb-1">
-                Click or drag to upload images
-              </p>
-              <p className="text-xs text-gray-400">
-                Max 5 images • PNG/JPG only • 5MB max per file
-              </p>
-              {images.length > 0 && (
-                <p className="text-xs text-blue-600 mt-2">
-                  {images.length}/5 images selected
-                </p>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleImageChange}
-            />
-
-            {errors.images && (
-              <Alert className="mt-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errors.images}</AlertDescription>
-              </Alert>
-            )}
-
-            {images.length > 0 && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {images.map((file, idx) => (
-                  <div key={idx} className="relative group">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      className="w-full h-20 object-cover rounded border"
-                      alt={`Upload ${idx + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end gap-2">

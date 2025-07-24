@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import api from '@/services/api';
 import type { User, UserRole, UserLocation } from '@/types';
 import { USER_ROLES, USER_LOCATIONS } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface UserManagementProps {
   userRole: 'Admin' | 'Devops'  | 'Hr'| 'Employee';
@@ -73,7 +74,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
   const handleEditUser = async (userData: Partial<User>) => {
     if (!selectedUser) return;
     try {
-      await api.post(`/users/${selectedUser.id}`, userData);
+      await api.patch(`/users/${selectedUser.id}`, userData);
       toast({ title: 'User Updated', description: 'User information has been updated successfully.' });
       setEditUserOpen(false);
       // Refresh user list
@@ -123,6 +124,13 @@ export function UserManagement({ userRole }: UserManagementProps) {
     }
   };
 
+  // Helper function to get avatar initials safely
+  const getAvatarInitials = (user) => {
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   const totalUsers = users.length;
   const adminCount = users.filter(user => user.role.name === 'Admin').length;
 
@@ -135,12 +143,10 @@ export function UserManagement({ userRole }: UserManagementProps) {
             Create, manage, and monitor users
           </p>
         </div>
-        {userRole === 'Admin' && (
-          <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Create User
-          </Button>
-        )}
+        <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" />
+          Create User
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,7 +237,15 @@ export function UserManagement({ userRole }: UserManagementProps) {
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
-                    {user.first_name} {user.last_name}
+                    {/* Avatar Fallback Only */}
+                    <div className="flex flex-row items-center gap-3">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback>
+                          {getAvatarInitials(user)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {user.first_name} {user.last_name}
+                    </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>

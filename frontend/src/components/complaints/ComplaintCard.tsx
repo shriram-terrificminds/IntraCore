@@ -212,7 +212,7 @@ export function ComplaintCard({ complaint, onStatusUpdate }: ComplaintCardProps)
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-4">
             <div>
               <span className="font-medium text-muted-foreground">Reported by:</span>
-              <p className="font-medium">{complaint.user.first_name && complaint.user.last_name ? `${complaint.user.first_name} ${complaint.user.last_name}` : complaint.user.name || 'Unknown'}</p>
+              <p className="font-medium">{complaint.user?.first_name && complaint.user?.last_name ? `${complaint.user.first_name} ${complaint.user.last_name}` : complaint.user?.name || 'Unknown'}</p>
             </div>
             <div>
               <span className="font-medium text-muted-foreground">Department:</span>
