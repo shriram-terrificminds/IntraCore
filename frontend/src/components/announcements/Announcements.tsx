@@ -53,7 +53,7 @@ export function Announcements({ userRole }: AnnouncementsProps) {
     },
     {
       id: '2',
-      content: 'The New York office will have maintenance this weekend. Please plan accordingly. 🛠️',
+      content: 'The Kochi office will have maintenance this weekend. Please plan accordingly. 🛠️',
       author: 'Admin',
       authorRole: 'admin',
       date: '2024-07-09T15:45',
@@ -62,8 +62,8 @@ export function Announcements({ userRole }: AnnouncementsProps) {
     },
     {
       id: '3',
-      content: 'New coffee machine installed in the London office pantry! ☕',
-      author: 'Sarah Wilson',
+      content: 'New coffee machine installed in the Trivandrum office pantry! ☕',
+      author: 'HR',
       authorRole: 'hr',
       date: '2024-07-09T17:00',
       toRole: 'all',
@@ -71,7 +71,7 @@ export function Announcements({ userRole }: AnnouncementsProps) {
     },
     {
       id: '4',
-      content: 'Team meeting scheduled for Friday at 2 PM in the California office conference room.',
+      content: 'Team meeting scheduled for Friday at 2 PM in the Bangalore office conference room.',
       author: 'Admin',
       authorRole: 'admin',
       date: '2024-07-09T17:30',
