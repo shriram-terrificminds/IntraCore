@@ -14,6 +14,15 @@ import api from '@/services/api';
 import type { User, UserRole, UserLocation } from '@/types';
 import { USER_ROLES, USER_LOCATIONS } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface UserManagementProps {
   userRole: 'Admin' | 'Devops'  | 'Hr'| 'Employee';
@@ -21,6 +30,13 @@ interface UserManagementProps {
 
 export function UserManagement({ userRole }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  // Debounced search
+  const debouncedSearchTerm = useDebounce(searchQuery, 700);
+  // Total records
+  const [totalRecords, setTotalRecords] = useState(0);
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [roleFilter, setRoleFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [users, setUsers] = useState<User[]>([]);
@@ -38,15 +54,19 @@ export function UserManagement({ userRole }: UserManagementProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch users with filters
+        // Fetch users with filters and pagination
         const response = await api.get('/users', {
           params: {
-            search: searchQuery,
+            search: debouncedSearchTerm,
             role_id: roleFilter !== 'all' ? roleFilter : undefined,
             location_id: locationFilter !== 'all' ? locationFilter : undefined,
+            page,
           },
         });
+        // Laravel pagination: response.data.data (users), response.data.last_page (totalPages), response.data.total (totalRecords)
         setUsers(response.data.data || response.data);
+        setTotalPages(response.data.last_page || 1);
+        setTotalRecords(response.data.total || 0);
       } catch (error) {
         toast({ title: 'Error', description: 'Failed to load user data', variant: 'destructive' });
       } finally {
@@ -54,7 +74,10 @@ export function UserManagement({ userRole }: UserManagementProps) {
       }
     };
     fetchData();
-  }, [searchQuery, roleFilter, locationFilter]);
+  }, [debouncedSearchTerm, roleFilter, locationFilter, page]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, roleFilter, locationFilter]);
 
   // Create user
   const handleCreateUser = async (userData: Partial<User>) => {
@@ -156,7 +179,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
             <span className="h-4 w-4 text-muted-foreground">👤</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
+            <div className="text-2xl font-bold">{totalRecords}</div>
             <p className="text-xs text-muted-foreground">
               Registered users
             </p>
@@ -286,6 +309,13 @@ export function UserManagement({ userRole }: UserManagementProps) {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination controls */}
+      <div className="flex justify-center mt-4 gap-2">
+        <Button size="sm" variant="outline" onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+        <span className="px-2 py-1">Page {page} of {totalPages}</span>
+        <Button size="sm" variant="outline" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
+      </div>
 
       <CreateUserDialog
         open={createUserOpen}
