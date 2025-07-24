@@ -106,29 +106,13 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Profile Image */}
+          {/* Avatar Fallback Only */}
           <div className="flex flex-col items-center gap-3">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={formData.profile_image} alt="Profile" />
               <AvatarFallback>
                 {getAvatarInitials()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="profile-image" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <Upload className="h-4 w-4" />
-                  Upload Photo
-                </div>
-              </Label>
-              <input
-                id="profile-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">

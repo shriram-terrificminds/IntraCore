@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import api from '@/services/api';
 import type { User, UserRole, UserLocation } from '@/types';
 import { USER_ROLES, USER_LOCATIONS } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface UserManagementProps {
   userRole: 'Admin' | 'Devops'  | 'Hr'| 'Employee';
@@ -123,6 +124,13 @@ export function UserManagement({ userRole }: UserManagementProps) {
     }
   };
 
+  // Helper function to get avatar initials safely
+  const getAvatarInitials = (user) => {
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   const totalUsers = users.length;
   const adminCount = users.filter(user => user.role.name === 'Admin').length;
 
@@ -229,7 +237,15 @@ export function UserManagement({ userRole }: UserManagementProps) {
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
-                    {user.first_name} {user.last_name}
+                    {/* Avatar Fallback Only */}
+                    <div className="flex flex-row items-center gap-3">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback>
+                          {getAvatarInitials(user)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {user.first_name} {user.last_name}
+                    </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>

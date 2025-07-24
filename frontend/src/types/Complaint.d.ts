@@ -12,5 +12,5 @@ export interface Complaint {
   resolved_at?: string | null;
   user?: { name?: string; first_name?: string; last_name?: string };
   resolvedBy?: { name: string };
-  images: Array<{ image_url: string }>;
+  images?: Array<{ image_url: string }>;
 } 
