@@ -30,6 +30,7 @@ export interface User {
   email: string;
   role: UserRole;
   location: UserLocation;
+  password?: string;
   profile_image?: string | null;
   player_id?: string | null;
   created_at: string;

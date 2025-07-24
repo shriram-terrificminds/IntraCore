@@ -1,4 +1,4 @@
-
+import { USER_ROLES, USER_LOCATIONS } from '@/types';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Edit, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { User, UserRole, UserLocation } from '@/types';
-
+import type { User } from '@/types';
 interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,12 +56,12 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
     }
 
     const updateData: Partial<User> = {
-      firstName: formData.first_name,
-      lastName: formData.last_name,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
       email: formData.email,
       location: formData.location,
       role: formData.role,
-      profileImage: formData.profile_image
+      profile_image: formData.profile_image
     };
 
     // Only include password if it's provided
@@ -111,29 +110,13 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Profile Image */}
+          {/* Avatar Fallback Only */}
           <div className="flex flex-col items-center gap-3">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={formData.profile_image} alt="Profile" />
               <AvatarFallback>
                 {getAvatarInitials()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-profile-image" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <Upload className="h-4 w-4" />
-                  Change Photo
-                </div>
-              </Label>
-              <input
-                id="edit-profile-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -174,13 +157,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
           <div className="space-y-2">
             <Label htmlFor="editRole">Role *</Label>
             <Select value={formData.role?.id?.toString() || ''} onValueChange={(value) => {
-              const roleObj = [
-                { id: 1, name: 'Admin' },
-                { id: 2, name: 'Hr' },
-                { id: 3, name: 'Devops' },
-                { id: 4, name: 'Employee' },
-              ].find(r => r.id.toString() === value);
-              setFormData(prev => ({ ...prev, role: roleObj }));
+              const roleObj = USER_ROLES.find(r => r.id.toString() === value);
+              if (roleObj) setFormData(prev => ({ ...prev, role: roleObj }));
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select user role" />
@@ -197,13 +175,8 @@ export function EditUserDialog({ open, onOpenChange, user, onEditUser }: EditUse
           <div className="space-y-2">
             <Label htmlFor="editLocation">Location *</Label>
             <Select value={formData.location?.id?.toString() || ''} onValueChange={(value) => {
-              const locationObj = [
-                { id: 1, name: 'Kochi' },
-                { id: 2, name: 'Trivandrum' },
-                { id: 3, name: 'Bangalore' },
-                { id: 4, name: 'Perth' },
-              ].find(l => l.id.toString() === value);
-              setFormData(prev => ({ ...prev, location: locationObj }));
+              const locationObj = USER_LOCATIONS.find(l => l.id.toString() === value);
+              if (locationObj) setFormData(prev => ({ ...prev, location: locationObj }));
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select office location" />

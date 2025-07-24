@@ -61,6 +61,7 @@ export function Header({}: HeaderProps) {
                   <p className="text-base font-semibold leading-none mt-2 mb-1">{user?.first_name} {user?.last_name}</p>
                   <p className="text-xs leading-none text-muted-foreground mb-2">{user?.email}</p>
                   <div className="flex w-full items-center justify-between gap-4 mt-2 mb-2">
+
                     <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
                       <User className="h-3 w-3" /> {user?.role.name}
                     </span>
