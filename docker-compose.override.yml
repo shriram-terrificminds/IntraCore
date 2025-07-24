@@ -1,0 +1,8 @@
+services:
+  backend:
+    environment:
+      - FRONTEND_URL=http://68.233.96.151:8050
+      - APP_URL=http://68.233.96.151:8000
+  frontend:
+    environment:
+      - VITE_API_URL=http://68.233.96.151:8000/api
