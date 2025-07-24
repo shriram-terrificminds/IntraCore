@@ -73,7 +73,7 @@ export function UserManagement({ userRole }: UserManagementProps) {
   const handleEditUser = async (userData: Partial<User>) => {
     if (!selectedUser) return;
     try {
-      await api.post(`/users/${selectedUser.id}`, userData);
+      await api.patch(`/users/${selectedUser.id}`, userData);
       toast({ title: 'User Updated', description: 'User information has been updated successfully.' });
       setEditUserOpen(false);
       // Refresh user list
@@ -135,12 +135,10 @@ export function UserManagement({ userRole }: UserManagementProps) {
             Create, manage, and monitor users
           </p>
         </div>
-        {userRole === 'Admin' && (
-          <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Create User
-          </Button>
-        )}
+        <Button onClick={() => setCreateUserOpen(true)} className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" />
+          Create User
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

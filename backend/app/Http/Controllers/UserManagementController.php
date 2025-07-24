@@ -55,11 +55,16 @@ class UserManagementController extends Controller
             'last_name' => 'required|string|max:50',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role_id' => ['required', Rule::exists('roles', 'id')],
-            'location_id' => ['required', Rule::exists('locations', 'id')],
+            'role' => ['required', 'array'],
+            'role.id' => ['required', Rule::exists('roles', 'id')],
+            'location' => ['required', 'array'],
+            'location.id' => ['required', Rule::exists('locations', 'id')],
             'profile_image' => 'nullable|image|max:2048',
         ]);
+
         $user = new User($validated);
+        $user->role_id = $request->role['id'];
+        $user->location_id = $request->location['id'];
         $user->password = Hash::make($validated['password']);
         if ($request->hasFile('profile_image')) {
             $user->profile_image = $request->file('profile_image')->store('profile_images', 'public');
@@ -79,10 +84,25 @@ class UserManagementController extends Controller
             'last_name' => 'sometimes|string|max:50',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'sometimes|nullable|string|min:8',
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')],
-            'location_id' => ['sometimes', Rule::exists('locations', 'id')],
+            'role' => ['sometimes', 'array'],
+            'role.id' => ['required_with:role', Rule::exists('roles', 'id')],
+            'location' => ['sometimes', 'array'],
+            'location.id' => ['required_with:location', Rule::exists('locations', 'id')],
         ]);
+
+        // Fill basic fields
         $user->fill($validated);
+
+        // Handle role object
+        if ($request->has('role') && is_array($request->role) && isset($request->role['id'])) {
+            $user->role_id = $request->role['id'];
+        }
+
+        // Handle location object
+        if ($request->has('location') && is_array($request->location) && isset($request->location['id'])) {
+            $user->location_id = $request->location['id'];
+        }
+
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }

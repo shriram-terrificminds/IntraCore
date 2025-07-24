@@ -335,7 +335,7 @@ export function InventoryRequests({ userRole }: InventoryRequestsProps) {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>{request.user.first_name && request.user.last_name ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</TableCell>
+                          <TableCell>{request.user?.first_name && request.user?.last_name ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</TableCell>
                           <TableCell>{request.role?.name || '-'}</TableCell>
                           <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>{request.approved_at ? new Date(request.approved_at).toLocaleDateString() : '-'}</TableCell>
