@@ -6,6 +6,7 @@ import { authService } from '../services/auth';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean;
   login: (email: string, password: string, remember: boolean) => Promise<void>;
   register: (
     name: string,
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -44,8 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, remember: boolean) => {
-    const response = await authService.login(email, password, remember);
-    setUser(response.user);
+    setIsLoading(true);
+    try {
+      const response = await authService.login(email, password, remember);
+      setUser(response.user);
+    } catch (error: any) {
+      // Rethrow error so LoginForm can handle and display it
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const register = async (
@@ -95,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         loading,
+        isLoading,
         login,
         register,
         logout,

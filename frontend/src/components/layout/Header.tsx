@@ -50,19 +50,17 @@ export function Header({}: HeaderProps) {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col items-start space-y-2 pb-2 w-full">
-                <Avatar className="h-14 w-14 mx-auto">
+          <DropdownMenuContent className="w-64 p-3" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal p-0">
+              <div className="flex flex-col items-center space-y-3 pb-3 w-full border-b border-muted-foreground/10">
+                <Avatar className="h-16 w-16 mb-1">
                   <AvatarImage src={user?.profile_image || 'https://randomuser.me/api/portraits/men/1.jpg'} alt={`${user?.first_name} ${user?.last_name}`} />
                   <AvatarFallback>{user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col space-y-1 w-full">
-                  <p className="text-sm font-medium leading-none">{user?.first_name} {user?.last_name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                  <div className="flex w-full items-center justify-between">
+                <div className="flex flex-col items-center w-full">
+                  <p className="text-base font-semibold leading-none mt-2 mb-1">{user?.first_name} {user?.last_name}</p>
+                  <p className="text-xs leading-none text-muted-foreground mb-2">{user?.email}</p>
+                  <div className="flex w-full items-center justify-between gap-4 mt-2 mb-2">
                     <span className="text-xs leading-none text-muted-foreground flex items-center gap-1">
                       <User className="h-3 w-3" /> {user?.role.name}
                     </span>
@@ -73,10 +71,10 @@ export function Header({}: HeaderProps) {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuItem onClick={logout} className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted-foreground/5 transition">
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm">Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

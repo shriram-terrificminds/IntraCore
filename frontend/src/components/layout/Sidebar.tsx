@@ -133,9 +133,9 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           </div>
         </SheetContent> */}
       <aside className="flex flex-col w-64 gap-4 p-4 border-r">
-        <img src="/IntraCoreLogo.jpg" alt="IntraCore Logo" className="h-14 w-14 mx-auto mb-2" />
-        <div className="text-center mb-2">
-          <h1 className="text-xl font-semibold" style={{ fontFamily: 'Roboto, sans-serif' }}>IntraCore</h1>
+        <div className="flex flex-col items-center mb-2">
+          <img src="/IntraCoreLogo.jpg" alt="IntraCore Logo" className="h-14 w-14" />
+          <h1 className="text-xl font-semibold mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>IntraCore</h1>
         </div>
         {/* Removed user card (avatar, name, email, role, location) from sidebar */}
         <div className="flex flex-col gap-1">
