@@ -16,6 +16,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   const { login, isLoading } = useAuth();
 
@@ -38,12 +39,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setGeneralError(null);
     if (!validateForm()) {
       return;
     }
-
-    await login(email, password, rememberMe);
+    try {
+      await login(email, password, rememberMe);
+    } catch (error: any) {
+      // Try to extract backend error message
+      let message = 'Login failed. Please try again.';
+      if (error?.response?.data?.errors?.email) {
+        message = error.response.data.errors.email[0];
+      } else if (error?.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      setGeneralError(message);
+    }
   };
 
   return (
@@ -57,6 +68,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {generalError && (
+          <div className="text-sm text-destructive text-center animate-in fade-in duration-200">
+            {generalError}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
